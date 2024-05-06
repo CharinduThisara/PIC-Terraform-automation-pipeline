@@ -1,0 +1,40 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    include:
+      - '*'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.x'
+      addToPath: true
+
+  - script: |
+      python -m pip install --upgrade pip
+      pip install -r requirements.txt
+    displayName: 'Install Python dependencies'
+
+  - checkout: self
+
+  - script: |
+      terraform init
+      terraform plan -out=tfplan
+    displayName: 'Terraform Init and Plan'
+
+  - script: |
+      terraform apply -auto-approve tfplan
+    displayName: 'Terraform Apply'
+
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: '$(Pipeline.Workspace)'
+      artifact: 'terraform-artifact'
+    displayName: 'Publish Terraform Artifact'
