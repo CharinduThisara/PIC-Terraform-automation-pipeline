@@ -11,30 +11,53 @@ pr:
 pool:
   vmImage: 'ubuntu-latest'
 
+parameters:
+  - name: terraform_repo_url
+    type: string
+    default: "https://github.com/CharinduThisara/terraform-basics"
+
 steps:
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '3.x'
-      addToPath: true
+  - script: |
+      # install Terraform if not already installed
+      if ! command -v terraform &> /dev/null
+      then
+          wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+          sudo apt update && sudo apt install terraform
+      fi
+      terraform --version
+    displayName: 'Install Terraform'
 
   - script: |
-      python -m pip install --upgrade pip
-      pip install -r requirements.txt
-    displayName: 'Install Python dependencies'
-
-  - checkout: self
+      # install Azure CLI if not already installed
+      if ! command -v az &> /dev/null
+      then
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+      fi
+      az --version
+    displayName: 'Install Azure CLI'
 
   - script: |
+      # login to Azure CLI
+      az login --service-principal -u $(servicePrincipalId) -p $(servicePrincipalKey) --tenant $(tenantId) --subscription $(subscriptionId)
+    displayName: 'Login to Azure CLI'
+
+  - script: |
+      git clone ${{ parameters.terraform_repo_url }} 
       terraform init
       terraform plan -out=tfplan
     displayName: 'Terraform Init and Plan'
 
   - script: |
-      terraform apply -auto-approve tfplan
-    displayName: 'Terraform Apply'
+      # Prompt for user input
+      terraform plan
+      echo "Would you like to apply Terraform changes? (yes/no)"
+      read confirmation
 
-  - task: PublishPipelineArtifact@1
-    inputs:
-      targetPath: '$(Pipeline.Workspace)'
-      artifact: 'terraform-artifact'
-    displayName: 'Publish Terraform Artifact'
+      # Check user input
+      if [ "$confirmation" = "yes" ]; then
+          terraform apply -auto-approve
+      else
+          echo "Terraform changes were not applied."
+      fi
+    displayName: 'Prompt for Terraform apply'
