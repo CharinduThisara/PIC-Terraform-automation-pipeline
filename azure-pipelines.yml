@@ -56,13 +56,15 @@ steps:
     displayName: 'Login to Azure CLI'
 
   - script: |
-      git clone ${{ parameters.terraform_repo_url }} 
+      git clone ${{ parameters.terraform_repo_url }}
+      cd terraform-basics
       terraform init
       terraform plan -out=tfplan
     displayName: 'Terraform Init and Plan'
 
   - script: |
       # Prompt for user input
+      cd terraform-basics
       terraform plan
       echo "Would you like to apply Terraform changes? (yes/no)"
       read confirmation
