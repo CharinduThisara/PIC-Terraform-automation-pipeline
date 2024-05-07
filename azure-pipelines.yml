@@ -72,6 +72,7 @@ jobs:
 
   - job: waitforValidation
     displayName: wait for deployment validation
+    dependsOn: InstallingTerraformAndAzureCLI
     pool: server
     steps:
       - task: ManualValidation@0
@@ -101,6 +102,13 @@ jobs:
           cd terraform-basics
           terraform init
           terraform plan -out=tfplanCurrent
+          echo "Checking the difference between the plan and the current state"
+          echo "-----------------------------------"
+          echo "Current plan"
+          cat tfplanCurrent
+          echo "-----------------------------------"
+          echo "Validated plan"
+          cat tfplan
           diff tfplan tfplanCurrent || exit 1
         displayName: 'Terraform Plan Check'
       - script: |
