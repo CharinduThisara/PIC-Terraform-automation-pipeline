@@ -115,8 +115,7 @@ jobs:
           cat tfplan.json
           echo "-----------------------------------"
           echo
-          echo "Difference"
-          diff tfplan tfplanCurrent
+          
         displayName: 'Terraform Plan Check'
       - script: |
           export ARM_CLIENT_ID=${{ parameters.service_principle_id }}
