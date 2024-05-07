@@ -64,6 +64,10 @@ steps:
     displayName: 'Login to Azure CLI'
 
   - script: |
+      export ARM_CLIENT_ID=${{ parameters.service_principle_id }}
+      export ARM_CLIENT_SECRET=${{ parameters.service_principal_secret }}
+      export ARM_SUBSCRIPTION_ID=${{ parameters.subscriptionId }}
+      export ARM_TENANT_ID=${{ parameters.tenantId }}
       git clone ${{ parameters.terraform_repo_url }}
       cd terraform-basics
       terraform init
@@ -71,6 +75,10 @@ steps:
     displayName: 'Terraform Init and Plan'
 
   - script: |
+      export ARM_CLIENT_ID=${{ parameters.service_principle_id }}
+      export ARM_CLIENT_SECRET=${{ parameters.service_principal_secret }}
+      export ARM_SUBSCRIPTION_ID=${{ parameters.subscriptionId }}
+      export ARM_TENANT_ID=${{ parameters.tenantId }}
       # Prompt for user input
       cd terraform-basics
       terraform plan
