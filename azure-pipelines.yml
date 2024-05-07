@@ -105,10 +105,12 @@ jobs:
           echo "Checking the difference between the plan and the current state"
           echo "-----------------------------------"
           echo "Current plan"
-          cat tfplanCurrent
+          terraform show -json tfplanCurrent > tfplanCurrent.json
+          cat tfplanCurrent.json
           echo "-----------------------------------"
           echo "Validated plan"
-          cat tfplan
+          terraform show -json tfplan > tfplan.json
+          cat tfplan.json
           diff tfplan tfplanCurrent || exit 1
         displayName: 'Terraform Plan Check'
       - script: |
