@@ -51,10 +51,7 @@ jobs:
           fi
           az --version
         displayName: 'Install Azure CLI'
-
-  - job: TerraformInitAndPlan
-    displayName: 'Terraform Init and Plan'
-    steps:
+        
       - script: |
           export ARM_CLIENT_ID=${{ parameters.service_principle_id }}
           export ARM_CLIENT_SECRET=${{ parameters.service_principal_secret }}
