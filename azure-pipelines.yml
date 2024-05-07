@@ -87,7 +87,9 @@ jobs:
           export ARM_TENANT_ID=${{ parameters.tenantId }}
           # Prompt for user input
           cd terraform-basics
-
+          git clone ${{ parameters.terraform_repo_url }}
+          cd terraform-basics
+          terraform init
           terraform apply -auto-approve
         
         displayName: 'Prompt for Terraform apply'
