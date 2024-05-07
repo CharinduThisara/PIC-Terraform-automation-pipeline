@@ -124,7 +124,6 @@ jobs:
           export ARM_TENANT_ID=${{ parameters.tenantId }}
           # Prompt for user input
           cd terraform-basics
-          cd terraform-basics
-          cat tfplan
+          cat tfplan.json | tr -d '\n' | sed 's/}{/}\n{/g'
           terraform apply tfplan
         displayName: 'Terraform Apply'
