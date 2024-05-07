@@ -50,20 +50,6 @@ steps:
     displayName: 'Install Azure CLI'
 
   - script: |
-      # login to Azure CLI
-      az login --service-principal -u ${{ parameters.service_principle_id }} -p ${{ parameters.service_principal_secret }} --tenant ${{ parameters.tenantId }}
-      az account set --subscription=${{ parameters.subscriptionId }}
-      
-
-      # set environment variables
-      echo "Setting environment variables"
-      export ARM_CLIENT_ID=${{ parameters.service_principle_id }}
-      export ARM_CLIENT_SECRET=${{ parameters.service_principal_secret }}
-      export ARM_SUBSCRIPTION_ID=${{ parameters.subscriptionId }}
-      export ARM_TENANT_ID=${{ parameters.tenantId }}
-    displayName: 'Login to Azure CLI'
-
-  - script: |
       export ARM_CLIENT_ID=${{ parameters.service_principle_id }}
       export ARM_CLIENT_SECRET=${{ parameters.service_principal_secret }}
       export ARM_SUBSCRIPTION_ID=${{ parameters.subscriptionId }}
