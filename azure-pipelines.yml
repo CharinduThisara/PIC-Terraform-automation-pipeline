@@ -89,7 +89,7 @@ jobs:
       - task: DownloadPipelineArtifact@2
         inputs:
           artifactName: 'tfplan'
-          targetPath: '$(System.DefaultWorkingDirectory)/terraform-basics/tfplan'
+          targetPath: '$(System.DefaultWorkingDirectory)/terraform-basics/'
         displayName: 'Download tfplan'
       - script: |
           export ARM_CLIENT_ID=${{ parameters.service_principle_id }}
