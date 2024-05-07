@@ -53,6 +53,7 @@ steps:
       # login to Azure CLI
       az login --service-principal -u ${{ parameters.service_principle_id }} -p ${{ parameters.service_principal_secret }} --tenant ${{ parameters.tenantId }}
       az account set --subscription=${{ parameters.subscriptionId }}
+      
     displayName: 'Login to Azure CLI'
 
   - script: |
