@@ -61,7 +61,10 @@ jobs:
           cd terraform-basics
           terraform init
           terraform plan -out=tfplan
-        displayName: 'Terraform Init and Plan'
+        displayName: 'Terraform Init and Plan and save the plan'
+      - publish: $(System.DefaultWorkingDirectory)/terraform-basics/tfplan
+        displayName: 'Publish Terraform plan'
+        artifact: drop
 
 
   - job: waitforValidation
@@ -78,6 +81,20 @@ jobs:
     dependsOn: waitforValidation
     steps:
       - script: |
+          git clone ${{ parameters.terraform_repo_url }}
+        displayName: 'Clone Terraform repo'
+      - download: $(System.DefaultWorkingDirectory)/terraform-basics
+        artifact: drop
+        patterns: 'tfplan'
+        displayName: 'Replace the tfplan file'
+      - script: |
+          # check difference between the plan and the current state
+          cd terraform-basics
+          terraform init
+          terraform plan -out=tfplanCurrent
+          diff tfplan tfplan_new || exit 1
+        displayName: 'Terraform Plan Check'
+      - script: |
           export ARM_CLIENT_ID=${{ parameters.service_principle_id }}
           export ARM_CLIENT_SECRET=${{ parameters.service_principal_secret }}
           export ARM_SUBSCRIPTION_ID=${{ parameters.subscriptionId }}
@@ -87,6 +104,5 @@ jobs:
           git clone ${{ parameters.terraform_repo_url }}
           cd terraform-basics
           terraform init
-          terraform apply -auto-approve
-        
-        displayName: 'Prompt for Terraform apply'
+          terraform apply -auto-approve tfplan
+        displayName: 'Terraform Apply'
