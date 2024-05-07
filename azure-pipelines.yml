@@ -101,7 +101,7 @@ jobs:
           cd terraform-basics
           terraform init
           terraform plan -out=tfplanCurrent
-          diff tfplan tfplan_new || exit 1
+          diff tfplan tfplanCurrent || exit 1
         displayName: 'Terraform Plan Check'
       - script: |
           export ARM_CLIENT_ID=${{ parameters.service_principle_id }}
