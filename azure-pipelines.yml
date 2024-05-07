@@ -92,6 +92,11 @@ jobs:
           targetPath: '$(System.DefaultWorkingDirectory)/terraform-basics/tfplan'
         displayName: 'Download tfplan'
       - script: |
+          export ARM_CLIENT_ID=${{ parameters.service_principle_id }}
+          export ARM_CLIENT_SECRET=${{ parameters.service_principal_secret }}
+          export ARM_SUBSCRIPTION_ID=${{ parameters.subscriptionId }}
+          export ARM_TENANT_ID=${{ parameters.tenantId }}
+
           # check difference between the plan and the current state
           cd terraform-basics
           terraform init
@@ -107,6 +112,6 @@ jobs:
           cd terraform-basics
           git clone ${{ parameters.terraform_repo_url }}
           cd terraform-basics
-          terraform init
-          terraform apply -auto-approve tfplan
+          cat tfplan
+          # terraform apply -auto-approve tfplan
         displayName: 'Terraform Apply'
