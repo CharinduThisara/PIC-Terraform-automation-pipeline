@@ -62,9 +62,12 @@ jobs:
           terraform init
           terraform plan -out=tfplan
         displayName: 'Terraform Init and Plan and save the plan'
-      - publish: $(System.DefaultWorkingDirectory)/terraform-basics/tfplan
-        displayName: 'Publish Terraform plan'
-        artifact: drop
+      - task: PublishPipelineArtifact@1
+        inputs:
+          targetPath: '$(System.DefaultWorkingDirectory)/terraform-basics/tfplan'
+          artifactName: 'tfplan'
+        displayName: 'Plublish tfplan'
+
 
 
   - job: waitforValidation
@@ -83,10 +86,11 @@ jobs:
       - script: |
           git clone ${{ parameters.terraform_repo_url }}
         displayName: 'Clone Terraform repo'
-      - download: $(System.DefaultWorkingDirectory)/terraform-basics
-        artifact: drop
-        patterns: 'tfplan'
-        displayName: 'Replace the tfplan file'
+      - task: DownloadPipelineArtifact@2
+        inputs:
+          artifactName: 'tfplan'
+          targetPath: '$(System.DefaultWorkingDirectory)/terraform-basics/tfplan'
+        displayName: 'Download tfplan'
       - script: |
           # check difference between the plan and the current state
           cd terraform-basics
