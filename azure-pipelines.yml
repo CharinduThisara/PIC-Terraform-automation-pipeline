@@ -104,14 +104,19 @@ jobs:
           terraform plan -out=tfplanCurrent
           echo "Checking the difference between the plan and the current state"
           echo "-----------------------------------"
+          echo
           echo "Current plan"
           terraform show -json tfplanCurrent > tfplanCurrent.json
           cat tfplanCurrent.json
           echo "-----------------------------------"
+          echo
           echo "Validated plan"
           terraform show -json tfplan > tfplan.json
           cat tfplan.json
-          diff tfplan tfplanCurrent || exit 1
+          echo "-----------------------------------"
+          echo
+          echo "Difference"
+          diff tfplan tfplanCurrent
         displayName: 'Terraform Plan Check'
       - script: |
           export ARM_CLIENT_ID=${{ parameters.service_principle_id }}
@@ -120,8 +125,7 @@ jobs:
           export ARM_TENANT_ID=${{ parameters.tenantId }}
           # Prompt for user input
           cd terraform-basics
-          git clone ${{ parameters.terraform_repo_url }}
           cd terraform-basics
           cat tfplan
-          # terraform apply -auto-approve tfplan
+          terraform apply tfplan
         displayName: 'Terraform Apply'
