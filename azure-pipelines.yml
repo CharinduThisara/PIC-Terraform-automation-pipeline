@@ -28,53 +28,66 @@ parameters:
     type: string
     default: $(subscriptionId)
 
-steps:
-  - script: |
-      # install Terraform if not already installed
-      if ! command -v terraform &> /dev/null
-      then
-          wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-          echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
-          sudo apt update && sudo apt install terraform
-      fi
-      terraform --version
-    displayName: 'Install Terraform'
+jobs:
+  - job: InstallingTerraformAndAzureCLI
+    displayName: 'Install Terraform and Azure CLI'
+    steps:
+      - script: |
+          # install Terraform if not already installed
+          if ! command -v terraform &> /dev/null
+          then
+              wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+              echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+              sudo apt update && sudo apt install terraform
+          fi
+          terraform --version
+        displayName: 'Install Terraform'
 
-  - script: |
-      # install Azure CLI if not already installed
-      if ! command -v az &> /dev/null
-      then
-          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-      fi
-      az --version
-    displayName: 'Install Azure CLI'
+      - script: |
+          # install Azure CLI if not already installed
+          if ! command -v az &> /dev/null
+          then
+              curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+          fi
+          az --version
+        displayName: 'Install Azure CLI'
 
-  - script: |
-      export ARM_CLIENT_ID=${{ parameters.service_principle_id }}
-      export ARM_CLIENT_SECRET=${{ parameters.service_principal_secret }}
-      export ARM_SUBSCRIPTION_ID=${{ parameters.subscriptionId }}
-      export ARM_TENANT_ID=${{ parameters.tenantId }}
-      git clone ${{ parameters.terraform_repo_url }}
-      cd terraform-basics
-      terraform init
-      terraform plan -out=tfplan
+  - job: TerraformInitAndPlan
     displayName: 'Terraform Init and Plan'
+    steps:
+      - script: |
+          export ARM_CLIENT_ID=${{ parameters.service_principle_id }}
+          export ARM_CLIENT_SECRET=${{ parameters.service_principal_secret }}
+          export ARM_SUBSCRIPTION_ID=${{ parameters.subscriptionId }}
+          export ARM_TENANT_ID=${{ parameters.tenantId }}
+          git clone ${{ parameters.terraform_repo_url }}
+          cd terraform-basics
+          terraform init
+          terraform plan -out=tfplan
+        displayName: 'Terraform Init and Plan'
 
-  - script: |
-      export ARM_CLIENT_ID=${{ parameters.service_principle_id }}
-      export ARM_CLIENT_SECRET=${{ parameters.service_principal_secret }}
-      export ARM_SUBSCRIPTION_ID=${{ parameters.subscriptionId }}
-      export ARM_TENANT_ID=${{ parameters.tenantId }}
-      # Prompt for user input
-      cd terraform-basics
-      terraform plan
-      echo "Would you like to apply Terraform changes? (yes/no)"
-      read confirmation
 
-      # Check user input
-      if [ "$confirmation" = "yes" ]; then
+  - job: waitforValidation
+    displayName: wait for deployment validation
+    pool: server
+    steps:
+      - task: ManualValidation@0
+        inputs:
+          notifyUsers: 'someone@kati.com'
+          instructions: 'Review the Terraform plan and confirm if you want to apply the changes.'
+  
+  - job: TerraformApply
+    displayName: 'Terraform Apply'
+    dependsOn: waitforValidation
+    steps:
+      - script: |
+          export ARM_CLIENT_ID=${{ parameters.service_principle_id }}
+          export ARM_CLIENT_SECRET=${{ parameters.service_principal_secret }}
+          export ARM_SUBSCRIPTION_ID=${{ parameters.subscriptionId }}
+          export ARM_TENANT_ID=${{ parameters.tenantId }}
+          # Prompt for user input
+          cd terraform-basics
+
           terraform apply -auto-approve
-      else
-          echo "Terraform changes were not applied."
-      fi
-    displayName: 'Prompt for Terraform apply'
+        
+        displayName: 'Prompt for Terraform apply'
