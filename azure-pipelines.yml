@@ -73,7 +73,7 @@ jobs:
     steps:
       - task: ManualValidation@0
         inputs:
-          notifyUsers: 'someone@kati.com'
+          notifyUsers: ''
           instructions: 'Review the Terraform plan and confirm if you want to apply the changes.'
   
   - job: TerraformApply
