@@ -61,16 +61,12 @@ stages:
             scriptLocation: 'inlineScript'
             scriptType: 'bash'
             inlineScript: |
-              echo "##vso[task.setvariable variable=ARM_CLIENT_ID]$servicePrincipalId"
+              echo "##vso[task.setvariable variable=ARM_CLIENT_ID;issecret=true]$servicePrincipalId"
               echo "##vso[task.setvariable variable=ARM_CLIENT_SECRET;issecret=true]$servicePrincipalKey"
-              echo "##vso[task.setvariable variable=ARM_SUBSCRIPTION_ID]$(az account show --query 'id' -o tsv)"
-              echo "##vso[task.setvariable variable=ARM_TENANT_ID]$tenantId"
+              echo "##vso[task.setvariable variable=ARM_SUBSCRIPTION_ID;issecret=true]$(az account show --query 'id' -o tsv)"
+              echo "##vso[task.setvariable variable=ARM_TENANT_ID;issecret=true]$tenantId"
 
         - script: |
-            echo "ARM_CLIENT_ID: $(ARM_CLIENT_ID)"
-            echo "ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)"
-            echo "ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)"
-            echo "ARM_TENANT_ID: $(ARM_TENANT_ID)"
             export ARM_CLIENT_ID=$(ARM_CLIENT_ID)
             export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET)
             export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
@@ -134,10 +130,10 @@ stages:
             
           displayName: 'Terraform Plan Check'
         - script: |
-            export ARM_CLIENT_ID=${{ parameters.service_principle_id }}
-            export ARM_CLIENT_SECRET=${{ parameters.service_principal_secret }}
-            export ARM_SUBSCRIPTION_ID=${{ parameters.subscriptionId }}
-            export ARM_TENANT_ID=${{ parameters.tenantId }}
+            export ARM_CLIENT_ID=$(ARM_CLIENT_ID)
+            export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET)
+            export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
+            export ARM_TENANT_ID=$(ARM_TENANT_ID)
             # Prompt for user input
             cd terraform-basics
             cat tfplan.json | tr -d '\n' | sed 's/}{/}\n{/g'
