@@ -85,12 +85,14 @@ stages:
       dependsOn: InstallingTerraformAndAzureCLI
       pool: server
       steps:
+        - script: |
+            # print the plan
+            echo $plan
         - task: ManualValidation@0
           inputs:
             notifyUsers: ''
             instructions: |
               'Review the Terraform plan and confirm if you want to apply the changes.'
-              $plan
     
     - job: TerraformApply
       displayName: 'Terraform Apply'
