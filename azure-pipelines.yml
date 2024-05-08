@@ -27,103 +27,95 @@ parameters:
   - name: subscriptionId
     type: string
     default: $(subscriptionId)
+stages:
+- stage: TerraformPlanAndApply
+  displayName: 'Terraform Deployment'
+  jobs:
+    - job: InstallingTerraformAndAzureCLI
+      displayName: 'Install Terraform and Azure CLI'
+      steps:
+        - script: |
+            # install Terraform if not already installed
+            if ! command -v terraform &> /dev/null
+            then
+                wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+                echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+                sudo apt update && sudo apt install terraform
+            fi
+            terraform --version
+          displayName: 'Install Terraform'
 
-jobs:
-  - job: InstallingTerraformAndAzureCLI
-    displayName: 'Install Terraform and Azure CLI'
-    steps:
-      - script: |
-          # install Terraform if not already installed
-          if ! command -v terraform &> /dev/null
-          then
-              wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-              echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
-              sudo apt update && sudo apt install terraform
-          fi
-          terraform --version
-        displayName: 'Install Terraform'
-
-      - script: |
-          # install Azure CLI if not already installed
-          if ! command -v az &> /dev/null
-          then
-              curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-          fi
-          az --version
-        displayName: 'Install Azure CLI'
-        
-      - script: |
-          export ARM_CLIENT_ID=${{ parameters.service_principle_id }}
-          export ARM_CLIENT_SECRET=${{ parameters.service_principal_secret }}
-          export ARM_SUBSCRIPTION_ID=${{ parameters.subscriptionId }}
-          export ARM_TENANT_ID=${{ parameters.tenantId }}
-          git clone ${{ parameters.terraform_repo_url }}
-          cd terraform-basics
-          terraform init
-          terraform plan -out=tfplan
-        displayName: 'Terraform Init and Plan and save the plan'
-      - task: PublishPipelineArtifact@1
-        inputs:
-          targetPath: '$(System.DefaultWorkingDirectory)/terraform-basics/tfplan'
-          artifactName: 'tfplan'
-        displayName: 'Plublish tfplan'
-
-
-
-  - job: waitforValidation
-    displayName: wait for deployment validation
-    dependsOn: InstallingTerraformAndAzureCLI
-    pool: server
-    steps:
-      - task: ManualValidation@0
-        inputs:
-          notifyUsers: ''
-          instructions: 'Review the Terraform plan and confirm if you want to apply the changes.'
-  
-  - job: TerraformApply
-    displayName: 'Terraform Apply'
-    dependsOn: waitforValidation
-    steps:
-      - script: |
-          git clone ${{ parameters.terraform_repo_url }}
-        displayName: 'Clone Terraform repo'
-      - task: DownloadPipelineArtifact@2
-        inputs:
-          artifactName: 'tfplan'
-          targetPath: '$(System.DefaultWorkingDirectory)/terraform-basics/'
-        displayName: 'Download tfplan'
-      - script: |
-          export ARM_CLIENT_ID=${{ parameters.service_principle_id }}
-          export ARM_CLIENT_SECRET=${{ parameters.service_principal_secret }}
-          export ARM_SUBSCRIPTION_ID=${{ parameters.subscriptionId }}
-          export ARM_TENANT_ID=${{ parameters.tenantId }}
-
-          # check difference between the plan and the current state
-          cd terraform-basics
-          terraform init
-          terraform plan -out=tfplanCurrent
-          echo "Checking the difference between the plan and the current state"
-          echo "-----------------------------------"
-          echo
-          echo "Current plan"
-          terraform show -json tfplanCurrent > tfplanCurrent.json
-          cat tfplanCurrent.json
-          echo "-----------------------------------"
-          echo
-          echo "Validated plan"
-          terraform show -json tfplan > tfplan.json
-          cat tfplan.json
-          echo "-----------------------------------"
-          echo
+        - script: |
+            # install Azure CLI if not already installed
+            if ! command -v az &> /dev/null
+            then
+                curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+            fi
+            az --version
+          displayName: 'Install Azure CLI'
           
-        displayName: 'Terraform Plan Check'
-      - script: |
-          export ARM_CLIENT_ID=${{ parameters.service_principle_id }}
-          export ARM_CLIENT_SECRET=${{ parameters.service_principal_secret }}
-          export ARM_SUBSCRIPTION_ID=${{ parameters.subscriptionId }}
-          export ARM_TENANT_ID=${{ parameters.tenantId }}
-          # Prompt for user input
-          cd terraform-basics
-          cat tfplan.json | tr -d '\n' | sed 's/}{/}\n{/g'
-          terraform apply tfplan
-        displayName: 'Terraform Apply'
+        - script: |
+            export ARM_CLIENT_ID=${{ parameters.service_principle_id }}
+            export ARM_CLIENT_SECRET=${{ parameters.service_principal_secret }}
+            export ARM_SUBSCRIPTION_ID=${{ parameters.subscriptionId }}
+            export ARM_TENANT_ID=${{ parameters.tenantId }}
+            git clone ${{ parameters.terraform_repo_url }}
+            cd terraform-basics
+            terraform init
+            terraform plan -out=tfplan
+          displayName: 'Terraform Init and Plan and save the plan'
+        - task: PublishPipelineArtifact@1
+          inputs:
+            targetPath: '$(System.DefaultWorkingDirectory)/terraform-basics/tfplan'
+            artifactName: 'tfplan'
+          displayName: 'Plublish tfplan'
+
+    - job: waitforValidation
+      displayName: wait for deployment validation
+      dependsOn: InstallingTerraformAndAzureCLI
+      pool: server
+      steps:
+        - task: ManualValidation@0
+          inputs:
+            notifyUsers: ''
+            instructions: 'Review the Terraform plan and confirm if you want to apply the changes.'
+    
+    - job: TerraformApply
+      displayName: 'Terraform Apply'
+      dependsOn: waitforValidation
+      steps:
+        - script: |
+            git clone ${{ parameters.terraform_repo_url }}
+          displayName: 'Clone Terraform repo'
+        - task: DownloadPipelineArtifact@2
+          inputs:
+            artifactName: 'tfplan'
+            targetPath: '$(System.DefaultWorkingDirectory)/terraform-basics/'
+          displayName: 'Download tfplan'
+        - script: |
+            export ARM_CLIENT_ID=${{ parameters.service_principle_id }}
+            export ARM_CLIENT_SECRET=${{ parameters.service_principal_secret }}
+            export ARM_SUBSCRIPTION_ID=${{ parameters.subscriptionId }}
+            export ARM_TENANT_ID=${{ parameters.tenantId }}
+
+            # check difference between the plan and the current state
+            cd terraform-basics
+            terraform init
+     
+            echo "Validated plan"
+            terraform show -json tfplan > tfplan.json
+            cat tfplan.json
+            echo "-----------------------------------"
+            echo
+            
+          displayName: 'Terraform Plan Check'
+        - script: |
+            export ARM_CLIENT_ID=${{ parameters.service_principle_id }}
+            export ARM_CLIENT_SECRET=${{ parameters.service_principal_secret }}
+            export ARM_SUBSCRIPTION_ID=${{ parameters.subscriptionId }}
+            export ARM_TENANT_ID=${{ parameters.tenantId }}
+            # Prompt for user input
+            cd terraform-basics
+            cat tfplan.json | tr -d '\n' | sed 's/}{/}\n{/g'
+            terraform apply tfplan
+          displayName: 'Terraform Apply'
