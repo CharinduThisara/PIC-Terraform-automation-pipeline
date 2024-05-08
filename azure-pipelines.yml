@@ -71,7 +71,7 @@ stages:
             terraform plan -out=tfplan
             # save the plan in jason format as a variable
             plan_json=$(terraform show -json tfplan)
-            echo "##vso[task.setvariable variable=plan]${plan_json}"
+            echo "##vso[task.setvariable variable=plan]$plan_json"
           displayName: 'Terraform Init and Plan and save the plan'
           
         - task: PublishPipelineArtifact@1
@@ -90,7 +90,7 @@ stages:
             notifyUsers: ''
             instructions: |
               'Review the Terraform plan and confirm if you want to apply the changes.'
-              '$plan'
+              $plan
     
     - job: TerraformApply
       displayName: 'Terraform Apply'
