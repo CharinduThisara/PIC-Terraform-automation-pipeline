@@ -85,9 +85,6 @@ stages:
       dependsOn: InstallingTerraformAndAzureCLI
       pool: server
       steps:
-        - script: |
-            # print the plan
-            echo $plan
         - task: ManualValidation@0
           inputs:
             notifyUsers: ''
