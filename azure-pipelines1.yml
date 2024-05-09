@@ -11,9 +11,6 @@ pr:
 pool:
   vmImage: 'ubuntu-latest'
 
-variables:
-  build.clean: none
-
 parameters:
   - name: terraform_repo_url
     type: string
@@ -29,7 +26,6 @@ stages:
     - job: InstallingTerraformAndAzureCLI
       displayName: 'Install Terraform and Azure CLI'
       steps:
-
         - script: |
             # install Terraform if not already installed
             if ! command -v terraform &> /dev/null
@@ -77,6 +73,12 @@ stages:
             plan_json=$(terraform show -json tfplan)
             echo "##vso[task.setvariable variable=plan]$plan_json"
           displayName: 'Terraform Init and Plan and save the plan'
+          
+        - task: PublishPipelineArtifact@1
+          displayName: 'Publish tfplan'
+          inputs:
+            targetPath: '$(System.DefaultWorkingDirectory)/terraform-basics/tfplan'
+            artifactName: 'tfplan'
 
     - job: waitforValidation
       displayName: wait for deployment validation
@@ -93,6 +95,10 @@ stages:
       displayName: 'Terraform Apply'
       dependsOn: waitforValidation
       steps:
+        - script: |
+            git clone ${{ parameters.terraform_repo_url }}
+          displayName: 'Clone Terraform repo'
+
         - task: AzureCLI@2
           displayName: 'Prepare Credentials'
           inputs:
@@ -106,9 +112,16 @@ stages:
               echo "##vso[task.setvariable variable=ARM_SUBSCRIPTION_ID;issecret=true]$(az account show --query 'id' -o tsv)"
               echo "##vso[task.setvariable variable=ARM_TENANT_ID;issecret=true]${tenantId}"
 
+        - task: DownloadPipelineArtifact@2
+          displayName: 'Download tfplan'
+          inputs:
+            artifactName: 'tfplan'
+            targetPath: '$(System.DefaultWorkingDirectory)/terraform-basics/'
+
         - script: |
             # check difference between the plan and the current state
             cd terraform-basics
+            terraform init
      
             echo "Validated plan"
             terraform show -json tfplan > tfplan.json
@@ -125,5 +138,5 @@ stages:
             # Prompt for user input
             cd terraform-basics
             cat tfplan.json | tr -d '\n' | sed 's/}{/}\n{/g'
-            # terraform apply tfplan
+            terraform apply tfplan
           displayName: 'Terraform Apply'
