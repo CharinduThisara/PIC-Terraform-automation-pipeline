@@ -79,8 +79,9 @@ stages:
           displayName: 'Terraform Init and Plan and save the plan'
           
         - task: AzureCLI@2
-          displayName: 'Prepare Credentials'
+          displayName: 'Upload tfplan to Azure Storage Account'
           inputs:
+            addSpnToEnvironment: true
             azureSubscription: ${{ parameters.service_connection_name }}
             scriptLocation: 'inlineScript'
             scriptType: 'bash'
