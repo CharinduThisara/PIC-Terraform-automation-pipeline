@@ -90,7 +90,7 @@ stages:
             echo "-------------------"
             ls terraform-conf
             echo "-------------------"
-            cd terraform_deployment
+            cd terraform-deployment
             ls ../
             echo "-------------------"
             ls ../terraform_conf
@@ -152,7 +152,7 @@ stages:
             echo "-------------------"
             ls -lah
             echo "-------------------"
-            cd terraform_deployment
+            cd terraform-deployment
             cp -r ../terraform-conf/* .
             terraform init
             echo "Validated plan"
