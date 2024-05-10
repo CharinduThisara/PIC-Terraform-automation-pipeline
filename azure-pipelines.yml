@@ -105,6 +105,11 @@ stages:
       displayName: 'Terraform Apply'
       dependsOn: waitforValidation
       steps:
+        - script: |
+            # clone git terraform_repo_url
+            git clone ${{ parameters.terraform_repo_url }}
+          displayName: 'Clone Terraform Repo'
+          
         - task: AzureCLI@2
           displayName: 'Prepare Credentials'
           inputs:
