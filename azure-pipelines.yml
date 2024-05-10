@@ -1,9 +1,3 @@
-pool:
-  vmImage: 'ubuntu-latest'
-
-variables:
-  build.clean: none
-
 parameters:
   - name: service_connection_name
     type: string
