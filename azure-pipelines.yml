@@ -162,5 +162,5 @@ stages:
             cd terraform-deployment
             # Prompt for user input
             cat tfplan.json | tr -d '\n' | sed 's/}{/}\n{/g'
-            # terraform apply tfplan
+            terraform apply tfplan
           displayName: 'Terraform Apply'
