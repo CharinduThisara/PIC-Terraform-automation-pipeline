@@ -45,7 +45,6 @@ stages:
       steps:
         - checkout: terraform_deployment
         - checkout: terraform_conf
-          path: conf.auto.tfvars
         - script: |
             # install Terraform if not already installed
             if ! command -v terraform &> /dev/null
@@ -87,6 +86,8 @@ stages:
             echo "-------------------"
             ls -lah
             echo "-------------------"
+            cd terraform_deployment
+            cp -r ../terraform_conf/* .
             terraform init
             terraform plan -out=tfplan
             # save the plan in jason format as a variable
@@ -140,6 +141,11 @@ stages:
 
         - script: |
             # check difference between the plan and the current state
+            echo "-------------------"
+            ls -lah
+            echo "-------------------"
+            cd terraform_deployment
+            cp -r ../terraform_conf/* .
             terraform init
             echo "Validated plan"
             terraform show -json tfplan > tfplan.json
@@ -153,6 +159,7 @@ stages:
             export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET)
             export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
             export ARM_TENANT_ID=$(ARM_TENANT_ID)
+            cd terraform_deployment
             # Prompt for user input
             cat tfplan.json | tr -d '\n' | sed 's/}{/}\n{/g'
             # terraform apply tfplan
