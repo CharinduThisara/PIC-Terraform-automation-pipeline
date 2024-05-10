@@ -7,21 +7,24 @@ variables:
 parameters:
   - name: service_connection_name
     type: string
+    default: $(service_connection_name)
   - name: azure_storage_account_name
     type: string
+    default: "charindutisurug"
   - name: azure_storage_container_name
     type: string
-  - name: terraform_deployment_repo
-    type: string
-  - name: github_service_connection
-    type: string
+    default: "terraform-automation-pipeline"
 
 resources:
   repositories:
+    - repository: terraform_conf
+      type: github
+      name: CharinduThisara/terraform-conf
+      endpoint: pipelines_github.com_CharinduThisara
     - repository: terraform_deployment
       type: github
-      name: ${{ parameters.terraform_deployment_repo }}
-      endpoint: ${{ parameters.github_service_connection }}
+      name: CharinduThisara/terraform-deployment
+      endpoint: pipelines_github.com_CharinduThisara
 
 stages:
 - stage: TerraformPlanAndApply
@@ -30,8 +33,8 @@ stages:
     - job: InstallingTerraformAndAzureCLI
       displayName: 'Install Terraform and Azure CLI'
       steps:
-        - checkout: self
         - checkout: terraform_deployment
+        - checkout: terraform_conf
         - script: |
             # install Terraform if not already installed
             if ! command -v terraform &> /dev/null
@@ -107,8 +110,8 @@ stages:
       displayName: 'Terraform Apply'
       dependsOn: waitforValidation
       steps:
-        - checkout: self
         - checkout: terraform_deployment
+        - checkout: terraform_conf
           path: conf.auto.tfvars
 
         - task: AzureCLI@2
@@ -149,5 +152,5 @@ stages:
             cd terraform-deployment
             # Prompt for user input
             cat tfplan.json | tr -d '\n' | sed 's/}{/}\n{/g'
-            # terraform apply tfplan
+            terraform apply tfplan
           displayName: 'Terraform Apply'
