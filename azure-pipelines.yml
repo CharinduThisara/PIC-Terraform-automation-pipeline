@@ -91,7 +91,7 @@ stages:
             ls terraform-conf
             echo "-------------------"
             cd terraform_deployment
-            cp -r ../terraform_conf/* .
+            cp -r ../terraform-conf/* .
             terraform init
             terraform plan -out=tfplan
             # save the plan in jason format as a variable
@@ -149,7 +149,7 @@ stages:
             ls -lah
             echo "-------------------"
             cd terraform_deployment
-            cp -r ../terraform_conf/* .
+            cp -r ../terraform-conf/* .
             terraform init
             echo "Validated plan"
             terraform show -json tfplan > tfplan.json
