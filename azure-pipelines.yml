@@ -96,7 +96,6 @@ stages:
       steps:
         - checkout: self
         - checkout: terraform_deployment
-          path: conf.auto.tfvars
 
         - task: AzureCLI@2
           displayName: 'Prepare Credentials'
