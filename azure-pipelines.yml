@@ -14,10 +14,10 @@ resources:
   repositories:
     - repository: terraform_deployment
       type: github
-      name: ${{ parameters.terraform_deployment_repo }}
-      endpoint: ${{ parameters.github_service_connection }}
+      name: CharinduThisara/PIC-Terraform-automation-pipeline
+      endpoint: pipelines_github.com_CharinduThisara
 
-stages:
+stages: 
 - stage: TerraformPlanAndApply
   displayName: 'Terraform Deployment'
   jobs:
