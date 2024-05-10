@@ -84,18 +84,10 @@ stages:
             export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
             export ARM_TENANT_ID=$(ARM_TENANT_ID)
             echo "-------------------"
+            cd terraform-deployment
+            cp ../terraform-conf/* .
             ls -lah
             echo "-------------------"
-            ls terraform-deployment
-            echo "-------------------"
-            ls terraform-conf
-            echo "-------------------"
-            cd terraform-deployment
-            ls ../
-            echo "-------------------"
-            ls ../terraform_conf
-            echo "-------------------"
-            cp ../terraform-conf/* .
             terraform init
             terraform plan -out=tfplan
             # save the plan in jason format as a variable
@@ -111,7 +103,7 @@ stages:
             scriptLocation: 'inlineScript'
             scriptType: 'bash'
             inlineScript: |
-              az storage blob upload --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.azure_storage_container_name }} --file $(System.DefaultWorkingDirectory)/terraform-basics/tfplan --name $(Build.BuildId)-tfplan
+              az storage blob upload --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.azure_storage_container_name }} --file $(System.DefaultWorkingDirectory)/terraform-deployment/tfplan --name $(Build.BuildId)-tfplan
 
     - job: waitforValidation
       displayName: wait for deployment validation
@@ -145,15 +137,15 @@ stages:
               echo "##vso[task.setvariable variable=ARM_SUBSCRIPTION_ID;issecret=true]$(az account show --query 'id' -o tsv)"
               echo "##vso[task.setvariable variable=ARM_TENANT_ID;issecret=true]${tenantId}"
 
-              az storage blob download --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.azure_storage_container_name }} --name $(Build.BuildId)-tfplan --file $(System.DefaultWorkingDirectory)/tfplan
+              az storage blob download --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.azure_storage_container_name }} --name $(Build.BuildId)-tfplan --file $(System.DefaultWorkingDirectory)/terraform-deployment/tfplan
 
         - script: |
             # check difference between the plan and the current state
             echo "-------------------"
+            cd terraform-deployment
+            cp ../terraform-conf/* .
             ls -lah
             echo "-------------------"
-            cd terraform-deployment
-            cp -r ../terraform-conf/* .
             terraform init
             echo "Validated plan"
             terraform show -json tfplan > tfplan.json
