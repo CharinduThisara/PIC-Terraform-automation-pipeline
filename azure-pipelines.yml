@@ -14,7 +14,7 @@ resources:
   repositories:
     - repository: terraform_deployment
       type: github
-      name: CharinduThisara/PIC-Terraform-automation-pipeline
+      name: CharinduThisara/terraform-deployment
       endpoint: pipelines_github.com_CharinduThisara
 
 stages: 
