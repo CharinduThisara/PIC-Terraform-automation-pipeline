@@ -91,7 +91,11 @@ stages:
             ls terraform-conf
             echo "-------------------"
             cd terraform_deployment
-            cp -r ../terraform-conf/* .
+            ls ../
+            echo "-------------------"
+            ls ../terraform_conf
+            echo "-------------------"
+            cp ../terraform-conf/* .
             terraform init
             terraform plan -out=tfplan
             # save the plan in jason format as a variable
