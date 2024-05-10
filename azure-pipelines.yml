@@ -10,13 +10,6 @@ parameters:
   - name: github_service_connection
     type: string
 
-resources:
-  repositories:
-    - repository: terraform_deployment
-      type: github
-      name: CharinduThisara/terraform-deployment
-      endpoint: pipelines_github.com_CharinduThisara
-
 stages: 
 - stage: TerraformPlanAndApply
   displayName: 'Terraform Deployment'
@@ -84,7 +77,7 @@ stages:
             scriptLocation: 'inlineScript'
             scriptType: 'bash'
             inlineScript: |
-              az storage blob upload --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.azure_storage_container_name }} --file $(System.DefaultWorkingDirectory)/terraform-deployment/tfplan --name $(Build.BuildId)-tfplan
+              az storage blob upload --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.azure_storage_container_name }} --file $(System.DefaultWorkingDirectory)/${{ parameters.terraform_deployment_repo }}/tfplan --name $(Build.BuildId)-tfplan
 
     - job: waitforValidation
       displayName: wait for deployment validation
@@ -118,12 +111,12 @@ stages:
               echo "##vso[task.setvariable variable=ARM_SUBSCRIPTION_ID;issecret=true]$(az account show --query 'id' -o tsv)"
               echo "##vso[task.setvariable variable=ARM_TENANT_ID;issecret=true]${tenantId}"
 
-              az storage blob download --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.azure_storage_container_name }} --name $(Build.BuildId)-tfplan --file $(System.DefaultWorkingDirectory)/terraform-deployment/tfplan
+              az storage blob download --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.azure_storage_container_name }} --name $(Build.BuildId)-tfplan --file $(System.DefaultWorkingDirectory)/${{ parameters.terraform_deployment_repo }}/tfplan
 
         - script: |
             # check difference between the plan and the current state
             echo "-------------------"
-            cd terraform-deployment
+            cd ${{ parameters.terraform_deployment_repo }}
             cp ../terraform-conf/* .
             ls -lah
             echo "-------------------"
@@ -140,7 +133,7 @@ stages:
             export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET)
             export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
             export ARM_TENANT_ID=$(ARM_TENANT_ID)
-            cd terraform-deployment
+            cd ${{ parameters.terraform_deployment_repo }}
             # Prompt for user input
             cat tfplan.json | tr -d '\n' | sed 's/}{/}\n{/g'
             # terraform apply tfplan
