@@ -86,7 +86,7 @@ stages:
             scriptLocation: 'inlineScript'
             scriptType: 'bash'
             inlineScript: |
-              az storage blob upload --account-name charindutisurug --container-name PIC-Terraform-automation-pipeline --file $(System.DefaultWorkingDirectory)/terraform-basics/tfplan --name ctr_terra_tfplan
+              az storage blob upload --account-name charindutisurug --container-name terraform-automation-pipeline --file $(System.DefaultWorkingDirectory)/terraform-basics/tfplan --name ctr_terra_tfplan
 
         
 
@@ -118,7 +118,7 @@ stages:
               echo "##vso[task.setvariable variable=ARM_SUBSCRIPTION_ID;issecret=true]$(az account show --query 'id' -o tsv)"
               echo "##vso[task.setvariable variable=ARM_TENANT_ID;issecret=true]${tenantId}"
 
-              az storage blob download --account-name charindutisurug --container-name PIC-Terraform-automation-pipeline --name ctr_terra_tfplan --file $(System.DefaultWorkingDirectory)/terraform-basics/tfplan
+              az storage blob download --account-name charindutisurug --container-name terraform-automation-pipeline --name ctr_terra_tfplan --file $(System.DefaultWorkingDirectory)/terraform-basics/tfplan
 
         - script: |
             # check difference between the plan and the current state
