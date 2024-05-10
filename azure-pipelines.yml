@@ -86,7 +86,7 @@ stages:
             scriptLocation: 'inlineScript'
             scriptType: 'bash'
             inlineScript: |
-              az storage blob upload --account-name charindutisurug --container-name terraform-automation-pipeline --file $(System.DefaultWorkingDirectory)/terraform-basics/tfplan --name ctr_terra_tfplan
+              az storage blob upload --account-name charindutisurug --container-name terraform-automation-pipeline --file $(System.DefaultWorkingDirectory)/terraform-basics/tfplan --name ctr_tfplan
 
         
 
@@ -109,7 +109,7 @@ stages:
             # clone git terraform_repo_url
             git clone ${{ parameters.terraform_repo_url }}
           displayName: 'Clone Terraform Repo'
-          
+
         - task: AzureCLI@2
           displayName: 'Prepare Credentials'
           inputs:
@@ -123,14 +123,14 @@ stages:
               echo "##vso[task.setvariable variable=ARM_SUBSCRIPTION_ID;issecret=true]$(az account show --query 'id' -o tsv)"
               echo "##vso[task.setvariable variable=ARM_TENANT_ID;issecret=true]${tenantId}"
 
-              az storage blob download --account-name charindutisurug --container-name terraform-automation-pipeline --name ctr_terra_tfplan --file $(System.DefaultWorkingDirectory)/terraform-basics
+              az storage blob download --account-name charindutisurug --container-name terraform-automation-pipeline --name ctr_tfplan --file $(System.DefaultWorkingDirectory)/terraform-basics/tfplan
 
         - script: |
             # check difference between the plan and the current state
             cd terraform-basics
      
             echo "Validated plan"
-            terraform show -json ctr_terra_tfplan > tfplan.json
+            terraform show -json tfplan > tfplan.json
             cat tfplan.json
             echo "-----------------------------------"
             echo
