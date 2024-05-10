@@ -84,7 +84,9 @@ stages:
             export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET)
             export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
             export ARM_TENANT_ID=$(ARM_TENANT_ID)
+            echo "-------------------"
             ls -lah
+            echo "-------------------"
             terraform init
             terraform plan -out=tfplan
             # save the plan in jason format as a variable
