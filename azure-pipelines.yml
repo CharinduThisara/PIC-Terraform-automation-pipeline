@@ -78,16 +78,16 @@ stages:
             echo "##vso[task.setvariable variable=plan]$plan_json"
           displayName: 'Terraform Init and Plan and save the plan'
           
-        - task: AzureFileCopy@1
+        - task: AzureCLI@2
+          displayName: 'Prepare Credentials'
           inputs:
-            SourcePath: '$(System.DefaultWorkingDirectory)/terraform-basics/tfplan'
-            azureSubscription: 'TF_charindu'
-            Destination: 'AzureBlob'
-            storage: 'charindutisurug'
-            ContainerName: 'PIC-Terraform-automation-pipeline'
-            BlobPrefix: 'ctr_terra_'
-            CleanTargetBeforeCopy: true
-            TargetPath: '$(System.DefaultWorkingDirectory)/terraform-basics/'
+            azureSubscription: ${{ parameters.service_connection_name }}
+            scriptLocation: 'inlineScript'
+            scriptType: 'bash'
+            inlineScript: |
+              az storage blob upload --account-name charindutisurug --container-name PIC-Terraform-automation-pipeline --file $(System.DefaultWorkingDirectory)/terraform-basics/tfplan --name ctr_terra_tfplan
+
+        
 
     - job: waitforValidation
       displayName: wait for deployment validation
