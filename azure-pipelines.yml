@@ -77,6 +77,17 @@ stages:
             plan_json=$(terraform show -json tfplan)
             echo "##vso[task.setvariable variable=plan]$plan_json"
           displayName: 'Terraform Init and Plan and save the plan'
+          
+        - task: AzureFileCopy@6
+          inputs:
+            SourcePath: '$(System.DefaultWorkingDirectory)/terraform-basics/tfplan'
+            azureSubscription: 'TF_charindu'
+            Destination: 'AzureBlob'
+            storage: 'charindutisurug'
+            ContainerName: 'PIC-Terraform-automation-pipeline'
+            BlobPrefix: 'ctr_terra_'
+            CleanTargetBeforeCopy: true
+            TargetPath: '$(System.DefaultWorkingDirectory)/terraform-basics/'
 
     - job: waitforValidation
       displayName: wait for deployment validation
@@ -105,6 +116,8 @@ stages:
               echo "##vso[task.setvariable variable=ARM_CLIENT_SECRET;issecret=true]${servicePrincipalKey}"
               echo "##vso[task.setvariable variable=ARM_SUBSCRIPTION_ID;issecret=true]$(az account show --query 'id' -o tsv)"
               echo "##vso[task.setvariable variable=ARM_TENANT_ID;issecret=true]${tenantId}"
+
+              az storage blob download --account-name charindutisurug --container-name PIC-Terraform-automation-pipeline --name ctr_terra_tfplan --file $(System.DefaultWorkingDirectory)/terraform-basics/tfplan
 
         - script: |
             # check difference between the plan and the current state
