@@ -21,6 +21,12 @@ parameters:
   - name: service_connection_name
     type: string
     default: $(service_connection_name)
+  - name: azure_storage_account_name
+    type: string
+    default: "charindutisurug"
+  - name: azure_storage_container_name
+    type: string
+    default: "terraform-automation-pipeline"
 
 stages:
 - stage: TerraformPlanAndApply
@@ -86,7 +92,7 @@ stages:
             scriptLocation: 'inlineScript'
             scriptType: 'bash'
             inlineScript: |
-              az storage blob upload --account-name charindutisurug --container-name terraform-automation-pipeline --file $(System.DefaultWorkingDirectory)/terraform-basics/tfplan --name $(Build.BuildId)-tfplan
+              az storage blob upload --account-name $azure_storage_account_name --container-name $azure_storage_container_name --file $(System.DefaultWorkingDirectory)/terraform-basics/tfplan --name $(Build.BuildId)-tfplan
 
         
 
@@ -123,7 +129,7 @@ stages:
               echo "##vso[task.setvariable variable=ARM_SUBSCRIPTION_ID;issecret=true]$(az account show --query 'id' -o tsv)"
               echo "##vso[task.setvariable variable=ARM_TENANT_ID;issecret=true]${tenantId}"
 
-              az storage blob download --account-name charindutisurug --container-name terraform-automation-pipeline --name $(Build.BuildId)-tfplan --file $(System.DefaultWorkingDirectory)/terraform-basics/tfplan
+              az storage blob download --account-name $azure_storage_account_name --container-name $azure_storage_container_name --name $(Build.BuildId)-tfplan --file $(System.DefaultWorkingDirectory)/terraform-basics/tfplan
 
         - script: |
             # check difference between the plan and the current state
@@ -144,5 +150,5 @@ stages:
             # Prompt for user input
             cd terraform-basics
             cat tfplan.json | tr -d '\n' | sed 's/}{/}\n{/g'
-            # terraform apply tfplan
+            terraform apply tfplan
           displayName: 'Terraform Apply'
