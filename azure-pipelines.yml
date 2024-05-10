@@ -125,7 +125,7 @@ stages:
             cd terraform-basics
      
             echo "Validated plan"
-            terraform show -json tfplan > tfplan.json
+            terraform show -json ctr_terra_tfplan > tfplan.json
             cat tfplan.json
             echo "-----------------------------------"
             echo
