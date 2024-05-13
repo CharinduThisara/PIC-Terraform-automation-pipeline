@@ -63,9 +63,7 @@ stages:
             ls -lah
             echo "-------------------"
             terraform init
-            terraform plan -out=tfplan
-            # get tf plan as JSON file
-            terraform show -json tfplan > tfplan.json
+            terraform plan -out=tfplan > tfplan.txt
           displayName: 'Terraform Init and Plan and save the plan'
           
         - task: AzureCLI@2
@@ -77,7 +75,7 @@ stages:
             scriptType: 'bash'
             inlineScript: |
               az storage blob upload --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.azure_storage_container_name }} --file $(System.DefaultWorkingDirectory)/${{ parameters.terraform_deployment_repo }}/tfplan --name $(Build.BuildId)-tfplan
-              az storage blob upload --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.azure_storage_container_name }} --file $(System.DefaultWorkingDirectory)/${{ parameters.terraform_deployment_repo }}/tfplan.json --name $(Build.BuildId)-tfplan.json
+              az storage blob upload --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.azure_storage_container_name }} --file $(System.DefaultWorkingDirectory)/${{ parameters.terraform_deployment_repo }}/tfplan.txt --name $(Build.BuildId)-tfplan.txt
 
     - job: waitforValidation
       displayName: wait for deployment validation
@@ -151,4 +149,4 @@ stages:
             scriptType: 'bash'
             inlineScript: |
               az storage blob delete --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.azure_storage_container_name }} --name $(Build.BuildId)-tfplan
-              az storage blob delete --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.azure_storage_container_name }} --name $(Build.BuildId)-tfplan.json
+              az storage blob delete --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.azure_storage_container_name }} --name $(Build.BuildId)-tfplan.txt
