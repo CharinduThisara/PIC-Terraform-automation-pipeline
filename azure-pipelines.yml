@@ -137,6 +137,7 @@ stages:
             cd ${{ parameters.terraform_deployment_repo }}
             # Prompt for user input
             cat tfplan.json | tr -d '\n' | sed 's/}{/}\n{/g'
+            echo "Validating configuration"
             terraform validate
             # terraform apply tfplan
           displayName: 'Terraform Apply'
