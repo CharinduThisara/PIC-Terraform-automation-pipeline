@@ -125,13 +125,19 @@ stages:
               az storage blob download --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.azure_storage_container_name }} --name $(Build.BuildId)-tfplan --file $(System.DefaultWorkingDirectory)/${{ parameters.terraform_deployment_repo }}/tfplan
 
         - script: |
-            # check difference between the plan and the current state
+            export ARM_CLIENT_ID=$(ARM_CLIENT_ID)
+            export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET)
+            export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
+            export ARM_TENANT_ID=$(ARM_TENANT_ID)
+
             echo "-------------------"
             cd ${{ parameters.terraform_deployment_repo }}
             cp ../terraform-conf/* .
             ls -lah
             echo "-------------------"
+
             terraform init -backend-config="storage_account_name=${{ parameters.azure_storage_account_name }}" -backend-config="container_name=${{ parameters.backend_container_name }}" -backend-config="key=${{ parameters.key }}" -backend-config="resource_group_name=${{ parameters.backend_resource_group_name }}"
+            
             echo "Validated plan"
             terraform show -json tfplan > tfplan.json
             cat tfplan.json
