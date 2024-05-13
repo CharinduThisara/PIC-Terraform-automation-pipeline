@@ -155,7 +155,7 @@ stages:
             cat tfplan.json | tr -d '\n' | sed 's/}{/}\n{/g'
             echo "Validating configuration"
             terraform validate
-            # terraform apply tfplan
+            terraform apply tfplan
           displayName: 'Terraform Apply'
       
         - task: AzureCLI@2
