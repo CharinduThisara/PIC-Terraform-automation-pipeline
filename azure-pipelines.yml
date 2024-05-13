@@ -7,8 +7,6 @@ parameters:
     type: string
   - name: terraform_deployment_repo
     type: string
-  - name: github_service_connection
-    type: string
   - name: backend_container_name
     type: string
   - name: key
