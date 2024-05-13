@@ -13,6 +13,9 @@ parameters:
     type: string
   - name: backend_resource_group_name
     type: string
+  - name: versioning
+    type: string
+    default: "false"
 
 stages: 
 - stage: TerraformPlanAndApply
@@ -67,7 +70,7 @@ stages:
             ls -lah
             echo "-------------------"
 
-            terraform init -backend-config="storage_account_name=${{ parameters.azure_storage_account_name }}" -backend-config="container_name=${{ parameters.backend_container_name }}" -backend-config="key=${{ parameters.key }}" -backend-config="resource_group_name=${{ parameters.backend_resource_group_name }} versioning=true"
+            terraform init -backend-config="storage_account_name=${{ parameters.azure_storage_account_name }}" -backend-config="container_name=${{ parameters.backend_container_name }}" -backend-config="key=${{ parameters.key }}" -backend-config="resource_group_name=${{ parameters.backend_resource_group_name }}" -backend-config="versioning=${{ parameters.versioning }}"
 
             echo "-------------------"
             ls -lah
@@ -136,7 +139,7 @@ stages:
             ls -lah
             echo "-------------------"
 
-            terraform init -backend-config="storage_account_name=${{ parameters.azure_storage_account_name }}" -backend-config="container_name=${{ parameters.backend_container_name }}" -backend-config="key=${{ parameters.key }}" -backend-config="resource_group_name=${{ parameters.backend_resource_group_name }} versioning=true"
+            terraform init -backend-config="storage_account_name=${{ parameters.azure_storage_account_name }}" -backend-config="container_name=${{ parameters.backend_container_name }}" -backend-config="key=${{ parameters.key }}" -backend-config="resource_group_name=${{ parameters.backend_resource_group_name }}" -backend-config="versioning=${{ parameters.versioning }}"
 
             echo "Validated plan"
             terraform show -json tfplan > tfplan.json
