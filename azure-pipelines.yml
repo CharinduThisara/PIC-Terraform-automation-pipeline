@@ -64,9 +64,8 @@ stages:
             echo "-------------------"
             terraform init
             terraform plan -out=tfplan
-            # save the plan in jason format as a variable
-            plan_json=$(terraform show -json tfplan)
-            echo "##vso[task.setvariable variable=plan]$plan_json"
+            # get tf plan as JSON file
+            terraform show -json tfplan > tfplan.json
           displayName: 'Terraform Init and Plan and save the plan'
           
         - task: AzureCLI@2
@@ -78,6 +77,7 @@ stages:
             scriptType: 'bash'
             inlineScript: |
               az storage blob upload --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.azure_storage_container_name }} --file $(System.DefaultWorkingDirectory)/${{ parameters.terraform_deployment_repo }}/tfplan --name $(Build.BuildId)-tfplan
+              az storage blob upload --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.azure_storage_container_name }} --file $(System.DefaultWorkingDirectory)/${{ parameters.terraform_deployment_repo }}/tfplan.json --name $(Build.BuildId)-tfplan.json
 
     - job: waitforValidation
       displayName: wait for deployment validation
@@ -98,7 +98,7 @@ stages:
         - checkout: terraform_deployment
 
         - task: AzureCLI@2
-          displayName: 'Prepare Credentials'
+          displayName: 'Prepare Azure Credentials and Download tfplan'
           inputs:
             addSpnToEnvironment: true
             azureSubscription: ${{ parameters.service_connection_name }}
@@ -141,3 +141,14 @@ stages:
             terraform validate
             # terraform apply tfplan
           displayName: 'Terraform Apply'
+      
+        - task: AzureCLI@2
+          displayName: 'Delete tfplan from Azure Storage Account'
+          inputs:
+            addSpnToEnvironment: true
+            azureSubscription: ${{ parameters.service_connection_name }}
+            scriptLocation: 'inlineScript'
+            scriptType: 'bash'
+            inlineScript: |
+              az storage blob delete --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.azure_storage_container_name }} --name $(Build.BuildId)-tfplan
+              az storage blob delete --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.azure_storage_container_name }} --name $(Build.BuildId)-tfplan.json
