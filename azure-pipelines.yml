@@ -123,7 +123,6 @@ stages:
               ls -la
               echo "-------------------"
               az storage blob download --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.azure_storage_container_name }} --name $(Build.BuildId)-tfplan --file $(System.DefaultWorkingDirectory)/${{ parameters.terraform_deployment_repo }}/tfplan
-              az storage blob snapshot --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.backend_container_name }} --name terraform.tfstate 
 
         - script: |
             export ARM_CLIENT_ID=$(ARM_CLIENT_ID)
