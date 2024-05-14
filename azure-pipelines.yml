@@ -173,7 +173,7 @@ stages:
 
         - task: AzureCLI@2
           displayName: 'Prepare Azure Credentials and Create a snapshot of the current state'
-          condition: and(succeeded(), eq(variables['backend_container_name'], ''), eq(variables['key'], ''), eq(variables['backend_resource_group_name'], ''))
+          condition: and(succeeded(), ne(variables['backend_container_name'], ''), ne(variables['key'], ''), ne(variables['backend_resource_group_name'], ''))
           inputs:
             addSpnToEnvironment: true
             azureSubscription: ${{ parameters.service_connection_name }}
