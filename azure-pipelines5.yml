@@ -67,10 +67,16 @@ stages:
             ls -lah
             echo "-------------------"
 
-            # If the backend container name, key and resource group name are not provided, use the configs in the terraform deployment repo
+            # If the backend container name, key and resource group name are not provided, fail the job
 
-            terraform init -backend-config="storage_account_name=${{ parameters.azure_storage_account_name }}" -backend-config="container_name=${{ parameters.backend_container_name }}" -backend-config="key=${{ parameters.key }}" -backend-config="resource_group_name=${{ parameters.backend_resource_group_name }}" 
-            
+            if [ -z "${{ parameters.backend_container_name }}" || -z "${{ parameters.key }}" || -z "${{ parameters.backend_resource_group_name }}" ]; then
+              echo "Backend container name, key and resource group name are required"
+              return 1
+            else
+              terraform init -backend-config="storage_account_name=${{ parameters.azure_storage_account_name }}" -backend-config="container_name=${{ parameters.backend_container_name }}" -backend-config="key=${{ parameters.key }}" -backend-config="resource_group_name=${{ parameters.backend_resource_group_name }}" 
+            fi
+
+
             echo "-------------------"
             ls -lah
             echo "-------------------"
@@ -139,7 +145,12 @@ stages:
             ls -lah
             echo "-------------------"
 
-            terraform init -backend-config="storage_account_name=${{ parameters.azure_storage_account_name }}" -backend-config="container_name=${{ parameters.backend_container_name }}" -backend-config="key=${{ parameters.key }}" -backend-config="resource_group_name=${{ parameters.backend_resource_group_name }}" fi
+            if [ -z "${{ parameters.backend_container_name }}" || -z "${{ parameters.key }}" || -z "${{ parameters.backend_resource_group_name }}" ]; then
+              echo "Backend container name, key and resource group name are required"
+              return 1
+            else
+              terraform init -backend-config="storage_account_name=${{ parameters.azure_storage_account_name }}" -backend-config="container_name=${{ parameters.backend_container_name }}" -backend-config="key=${{ parameters.key }}" -backend-config="resource_group_name=${{ parameters.backend_resource_group_name }}" 
+            fi
 
             echo "Validated plan"
             terraform show -json tfplan > tfplan.json
@@ -147,6 +158,10 @@ stages:
             echo "-----------------------------------"
             echo
 
+            # set variables for backend_container_name, key and backend_resource_group_name
+            echo "##vso[task.setvariable variable=backend_container_name]${{ parameters.backend_container_name }}"
+            echo "##vso[task.setvariable variable=key]${{ parameters.key }}"
+            echo "##vso[task.setvariable variable=backend_resource_group_name]${{ parameters.backend_resource_group_name }}"
           displayName: 'Terraform Plan Check'
 
         - script: |
@@ -157,6 +172,7 @@ stages:
 
         - task: AzureCLI@2
           displayName: 'Prepare Azure Credentials and Create a snapshot of the current state'
+          condition: and(succeeded(), ne(variables['backend_container_name'], ''), ne(variables['key'], ''), ne(variables['backend_resource_group_name'], ''))
           inputs:
             addSpnToEnvironment: true
             azureSubscription: ${{ parameters.service_connection_name }}
