@@ -153,12 +153,7 @@ stages:
             azureSubscription: ${{ parameters.service_connection_name }}
             scriptLocation: 'inlineScript'
             scriptType: 'bash'
-            inlineScript: |
-              echo "##vso[task.setvariable variable=ARM_CLIENT_ID;issecret=true]${servicePrincipalId}"
-              echo "##vso[task.setvariable variable=ARM_CLIENT_SECRET;issecret=true]${servicePrincipalKey}"
-              echo "##vso[task.setvariable variable=ARM_SUBSCRIPTION_ID;issecret=true]$(az account show --query 'id' -o tsv)"
-              echo "##vso[task.setvariable variable=ARM_TENANT_ID;issecret=true]${tenantId}"
-              
+            inlineScript: |              
               az storage blob snapshot --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.backend_container_name }} --name ${{ parameters.key }} 
 
 
