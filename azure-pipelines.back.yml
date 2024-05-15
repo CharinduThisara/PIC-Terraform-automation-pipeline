@@ -1,17 +1,17 @@
 parameters:
-  - name: service_connection_name
+  - name: SERVICE_CONNECTION_NAME
     type: string
-  - name: azure_storage_account_name
+  - name: AZURE_STORAGE_ACCOUNT_NAME
     type: string
-  - name: azure_storage_container_name
+  - name: AZURE_STORAGE_CONTAINER_NAME
     type: string
-  - name: terraform_deployment_repo
+  - name: TERRAFORM_DEPLOYMENT_REPO
     type: string
-  - name: backend_container_name
+  - name: BACKEND_CONTAINER_NAME
     type: string
-  - name: key
+  - name: BACKEND_KEY
     type: string
-  - name: backend_resource_group_name
+  - name: BACKEND_RESOURCE_GROUP_NAME
     type: string
 
 stages: 
@@ -27,8 +27,8 @@ stages:
             # install Terraform if not already installed
             if ! command -v terraform &> /dev/null
             then
-                wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-                echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+                wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/BACKEND_KEYrings/hashicorp-archive-BACKEND_KEYring.gpg
+                echo "deb [signed-by=/usr/share/BACKEND_KEYrings/hashicorp-archive-BACKEND_KEYring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
                 sudo apt update && sudo apt install terraform
             fi
             terraform --version
@@ -47,12 +47,12 @@ stages:
           displayName: 'Prepare Credentials'
           inputs:
             addSpnToEnvironment: true
-            azureSubscription: ${{ parameters.service_connection_name }}
+            azureSubscription: ${{ parameters.SERVICE_CONNECTION_NAME }}
             scriptLocation: 'inlineScript'
             scriptType: 'bash'
             inlineScript: |
               echo "##vso[task.setvariable variable=ARM_CLIENT_ID;issecret=true]${servicePrincipalId}"
-              echo "##vso[task.setvariable variable=ARM_CLIENT_SECRET;issecret=true]${servicePrincipalKey}"
+              echo "##vso[task.setvariable variable=ARM_CLIENT_SECRET;issecret=true]${servicePrincipalBACKEND_KEY}"
               echo "##vso[task.setvariable variable=ARM_SUBSCRIPTION_ID;issecret=true]$(az account show --query 'id' -o tsv)"
               echo "##vso[task.setvariable variable=ARM_TENANT_ID;issecret=true]${tenantId}"
               
@@ -62,14 +62,14 @@ stages:
             export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
             export ARM_TENANT_ID=$(ARM_TENANT_ID)
             echo "-------------------"
-            cd ${{ parameters.terraform_deployment_repo }}
+            cd ${{ parameters.TERRAFORM_DEPLOYMENT_REPO }}
             cp ../terraform-conf/* .
             ls -lah
             echo "-------------------"
 
-            # If the backend container name, key and resource group name are not provided, use the configs in the terraform deployment repo
+            # If the backend container name, BACKEND_KEY and resource group name are not provided, use the configs in the terraform deployment repo
 
-            terraform init -backend-config="storage_account_name=${{ parameters.azure_storage_account_name }}" -backend-config="container_name=${{ parameters.backend_container_name }}" -backend-config="key=${{ parameters.key }}" -backend-config="resource_group_name=${{ parameters.backend_resource_group_name }}" 
+            terraform init -backend-config="storage_account_name=${{ parameters.AZURE_STORAGE_ACCOUNT_NAME }}" -backend-config="container_name=${{ parameters.BACKEND_CONTAINER_NAME }}" -backend-config="key=${{ parameters.BACKEND_KEY }}" -backend-config="resource_group_name=${{ parameters.BACKEND_RESOURCE_GROUP_NAME }}" 
             
             echo "-------------------"
             ls -lah
@@ -83,12 +83,12 @@ stages:
           displayName: 'Upload tfplan to Azure Storage Account'
           inputs:
             addSpnToEnvironment: true
-            azureSubscription: ${{ parameters.service_connection_name }}
+            azureSubscription: ${{ parameters.SERVICE_CONNECTION_NAME }}
             scriptLocation: 'inlineScript'
             scriptType: 'bash'
             inlineScript: |
-              az storage blob upload --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.azure_storage_container_name }} --file $(System.DefaultWorkingDirectory)/${{ parameters.terraform_deployment_repo }}/tfplan --name $(Build.BuildId)-tfplan
-              az storage blob upload --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.azure_storage_container_name }} --file $(System.DefaultWorkingDirectory)/${{ parameters.terraform_deployment_repo }}/tfplan.txt --name $(Build.BuildId)-tfplan.txt
+              az storage blob upload --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.AZURE_STORAGE_CONTAINER_NAME }} --file $(System.DefaultWorkingDirectory)/${{ parameters.TERRAFORM_DEPLOYMENT_REPO }}/tfplan --name $(Build.BuildId)-tfplan
+              az storage blob upload --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.AZURE_STORAGE_CONTAINER_NAME }} --file $(System.DefaultWorkingDirectory)/${{ parameters.TERRAFORM_DEPLOYMENT_REPO }}/tfplan.txt --name $(Build.BuildId)-tfplan.txt
 
     - job: waitforValidation
       displayName: wait for deployment validation
@@ -100,6 +100,8 @@ stages:
             notifyUsers: ''
             instructions: |
               'Review the Terraform plan and confirm if you want to apply the changes.' 
+              '\n'
+              'https://portal.azure.com/#view/Microsoft_Azure_Storage/BlobPropertiesBladeV2/storageAccountId/%2Fsubscriptions%2F38785beb-5019-4896-8679-3d41ddacc4b1%2FresourceGroups%2Frnd-charindut-isuru%2Fproviders%2FMicrosoft.Storage%2FstorageAccounts%2Fcharindutisurug/path/terraform-automation-pipeline'
     
     - job: TerraformApply
       displayName: 'Terraform Apply'
@@ -112,18 +114,18 @@ stages:
           displayName: 'Prepare Azure Credentials and Download tfplan'
           inputs:
             addSpnToEnvironment: true
-            azureSubscription: ${{ parameters.service_connection_name }}
+            azureSubscription: ${{ parameters.SERVICE_CONNECTION_NAME }}
             scriptLocation: 'inlineScript'
             scriptType: 'bash'
             inlineScript: |
               echo "##vso[task.setvariable variable=ARM_CLIENT_ID;issecret=true]${servicePrincipalId}"
-              echo "##vso[task.setvariable variable=ARM_CLIENT_SECRET;issecret=true]${servicePrincipalKey}"
+              echo "##vso[task.setvariable variable=ARM_CLIENT_SECRET;issecret=true]${servicePrincipalBACKEND_KEY}"
               echo "##vso[task.setvariable variable=ARM_SUBSCRIPTION_ID;issecret=true]$(az account show --query 'id' -o tsv)"
               echo "##vso[task.setvariable variable=ARM_TENANT_ID;issecret=true]${tenantId}"
               echo "-------------------"
               ls -la
               echo "-------------------"
-              az storage blob download --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.azure_storage_container_name }} --name $(Build.BuildId)-tfplan --file $(System.DefaultWorkingDirectory)/${{ parameters.terraform_deployment_repo }}/tfplan
+              az storage blob download --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.AZURE_STORAGE_CONTAINER_NAME }} --name $(Build.BuildId)-tfplan --file $(System.DefaultWorkingDirectory)/${{ parameters.TERRAFORM_DEPLOYMENT_REPO }}/tfplan
 
         - script: |
             export ARM_CLIENT_ID=$(ARM_CLIENT_ID)
@@ -132,12 +134,12 @@ stages:
             export ARM_TENANT_ID=$(ARM_TENANT_ID)
 
             echo "-------------------"
-            cd ${{ parameters.terraform_deployment_repo }}
+            cd ${{ parameters.TERRAFORM_DEPLOYMENT_REPO }}
             cp ../terraform-conf/* .
             ls -lah
             echo "-------------------"
 
-            terraform init -backend-config="storage_account_name=${{ parameters.azure_storage_account_name }}" -backend-config="container_name=${{ parameters.backend_container_name }}" -backend-config="key=${{ parameters.key }}" -backend-config="resource_group_name=${{ parameters.backend_resource_group_name }}"
+            terraform init -backend-config="storage_account_name=${{ parameters.AZURE_STORAGE_ACCOUNT_NAME }}" -backend-config="container_name=${{ parameters.BACKEND_CONTAINER_NAME }}" -backend-config="key=${{ parameters.BACKEND_KEY }}" -backend-config="resource_group_name=${{ parameters.BACKEND_RESOURCE_GROUP_NAME }}"
 
             echo "Validated plan"
             terraform show -json tfplan > tfplan.json
@@ -147,28 +149,22 @@ stages:
 
           displayName: 'Terraform Plan Check'
 
-        - script: |
-            echo "##vso[task.setvariable variable=backend_container_name]${{ parameters.backend_container_name }}"
-            echo "##vso[task.setvariable variable=key]${{ parameters.key }}"
-            echo "##vso[task.setvariable variable=backend_resource_group_name]${{ parameters.backend_resource_group_name }}"
-          displayName: 'Set parameters as variables'
-
         - task: AzureCLI@2
           displayName: 'Prepare Azure Credentials and Create a snapshot of the current state'
           inputs:
             addSpnToEnvironment: true
-            azureSubscription: ${{ parameters.service_connection_name }}
+            azureSubscription: ${{ parameters.SERVICE_CONNECTION_NAME }}
             scriptLocation: 'inlineScript'
             scriptType: 'bash'
             inlineScript: |
-              az storage blob snapshot --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.backend_container_name }} --name ${{ parameters.key }} 
+              az storage blob snapshot --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.BACKEND_CONTAINER_NAME }} --name ${{ parameters.BACKEND_KEY }} 
 
         - script: |
             export ARM_CLIENT_ID=$(ARM_CLIENT_ID)
             export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET)
             export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
             export ARM_TENANT_ID=$(ARM_TENANT_ID)
-            cd ${{ parameters.terraform_deployment_repo }}
+            cd ${{ parameters.TERRAFORM_DEPLOYMENT_REPO }}
             # Prompt for user input
             cat tfplan.json | tr -d '\n' | sed 's/}{/}\n{/g'
             echo "Validating configuration"
@@ -180,9 +176,9 @@ stages:
           displayName: 'Delete tfplan from Azure Storage Account'
           inputs:
             addSpnToEnvironment: true
-            azureSubscription: ${{ parameters.service_connection_name }}
+            azureSubscription: ${{ parameters.SERVICE_CONNECTION_NAME }}
             scriptLocation: 'inlineScript'
             scriptType: 'bash'
             inlineScript: |
-              az storage blob delete --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.azure_storage_container_name }} --name $(Build.BuildId)-tfplan
-              az storage blob delete --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.azure_storage_container_name }} --name $(Build.BuildId)-tfplan.txt
+              az storage blob delete --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.AZURE_STORAGE_CONTAINER_NAME }} --name $(Build.BuildId)-tfplan
+              az storage blob delete --account-name ${{ parameters.azure_storage_account_name }} --container-name  ${{ parameters.AZURE_STORAGE_CONTAINER_NAME }} --name $(Build.BuildId)-tfplan.txt
