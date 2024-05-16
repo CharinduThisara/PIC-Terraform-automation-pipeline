@@ -214,7 +214,7 @@ stages:
             terraform validate
 
             echo "Applying configuration"
-            terraform apply tfplan -input=false 
+            terraform apply -input=false tfplan 
           displayName: 'Terraform Init, Validate and apply the plan'
       
         - task: AzureCLI@2
