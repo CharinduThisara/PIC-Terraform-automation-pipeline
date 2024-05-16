@@ -132,6 +132,12 @@ stages:
             cat tfplan.txt
             echo "------------------------------------------------"
 
+            # if tfplan does not exist fail pipeline
+            if [ ! -f tfplan ]; then
+              echo "##vso[task.logissue type=error]Terraform plan failed. Please check the logs."
+              exit 1
+            fi
+
             # set variable for tfplan container name
             echo "##vso[task.setvariable variable=TFPLAN_CONTAINER_NAME;issecret=false]${{ parameters.TFPLAN_CONTAINER_NAME }}"
 
@@ -212,6 +218,12 @@ stages:
 
             echo "Validating configuration"
             terraform validate
+
+            # if tfplan does not exist fail pipeline
+            if [ ! -f tfplan ]; then
+              echo "##vso[task.logissue type=error]Terraform plan failed. Please check the logs."
+              exit 1
+            fi
 
             echo "Applying configuration"
             terraform apply -input=false tfplan 
