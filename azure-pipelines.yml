@@ -1,11 +1,11 @@
 parameters:
-  - name: TERRAFORM_VERSION
+  - name: TERRAFORM_VERSION # eg. :  1.8.1-1 
     type: string
-    default: ""
-  - name: AZCLIVERSION
+    default: "1.8.3-1"
+  - name: AZCLIVERSION # eg. : 2.60.0
     type: string
-    default: ""
-  - name: NOTIFY_EMAIL
+    default: "2.60.0"
+  - name: NOTIFY_EMAIL # eg. : abc@cde.com
     type: string
     default: ""
   - name: TERRAFORM_DEPLOYMENT_REPO # please enter the same "repository name" as defined in the pipeline where this template is used
@@ -19,7 +19,7 @@ parameters:
     default: ""
   - name: BACKEND_CONTAINER_NAME
     type: string
-  - name: BACKEND_KEY
+  - name: BACKEND_KEY # eg. : terraform.tfstate
     type: string
   - name: BACKEND_RESOURCE_GROUP_NAME
     type: string
@@ -37,67 +37,53 @@ stages:
           path: terraform_deployment
         - script: |
             # Install or upgrade Terraform
-            if [[ -z "${{ parameters.TERRAFORM_VERSION }}" ]] && ! command -v terraform &> /dev/null; then
-                echo "No specific Terraform version provided. Installing the latest version."
-                sudo apt update && sudo apt install terraform
 
-            elif [[ "$(terraform --version | head -1 | cut -d' ' -f2)" != "${{ parameters.TERRAFORM_VERSION }}" ]] && [[ -n "${{ parameters.TERRAFORM_VERSION }}" ]]; then
-
-                if command -v terraform &> /dev/null; then
-                    echo "Uninstalling existing Terraform version"
-                    sudo apt remove terraform -y
-                fi
-
-                echo "Installing/Upgrading Terraform to version ${{ parameters.TERRAFORM_VERSION }}"
-                wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-                echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
-                sudo apt update && sudo apt install "terraform=${{ parameters.TERRAFORM_VERSION }}" -y
-            else
-                echo "Terraform is already installed and matches the required version." 
+            if command -v terraform &> /dev/null; then
+                echo "Uninstalling existing Terraform version"
+                sudo apt remove terraform -y
             fi
+
+            echo "Installing/Upgrading Terraform to version ${{ parameters.TERRAFORM_VERSION }}"
+            wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+            echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+            sudo apt update && sudo apt install terraform=${{ parameters.TERRAFORM_VERSION }} -y
+          
             terraform --version
           displayName: 'Install/Upgrade Terraform'
 
         - script: |
             # Install or upgrade Azure CLI
-            if [[ -z "${{ parameters.AZCLIVERSION }}" ]] && ! command -v az &> /dev/null; then
-                echo "No specific Azure CLI version provided. Installing the latest version."
-                curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-            elif ! command -v az &> /dev/null || [[ "$(az --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)" != "$azCliVersion" ]] && [[ -n "${{ parameters.AZCLIVERSION }}" ]]; then
-
-                if command -v az &> /dev/null; then
-                    echo "Uninstalling existing Azure CLI version"
-                    sudo apt remove azure-cli -y
-                fi
-
-                echo "Installing/Upgrading Azure CLI to version $azCliVersion"
-                sudo apt-get update
-                sudo apt-get install apt-transport-https ca-certificates curl gnupg lsb-release
-
-                sudo mkdir -p /etc/apt/keyrings
-                curl -sLS https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /etc/apt/keyrings/microsoft.gpg
-                sudo chmod go+r /etc/apt/keyrings/microsoft.gpg
-
-                AZ_DIST=$(lsb_release -cs)
-                echo "Types: deb
-                URIs: https://packages.microsoft.com/repos/azure-cli/
-                Suites: ${AZ_DIST}
-                Components: main
-                Architectures: $(dpkg --print-architecture)
-                Signed-by: /etc/apt/keyrings/microsoft.gpg" | sudo tee /etc/apt/sources.list.d/azure-cli.sources
-
-                # Obtain the currently installed distribution
-                AZ_DIST=$(lsb_release -cs)
-
-                # Store an Azure CLI version of choice
-                AZ_VER=${{ parameters.AZCLIVERSION }}
-
-                # Install a specific version
-                sudo apt-get install azure-cli=${AZ_VER}-1~${AZ_DIST}
-
-            else
-                echo "Azure CLI is already installed and matches the required version."
+            
+            if command -v az &> /dev/null; then
+                echo "Uninstalling existing Azure CLI version"
+                sudo apt remove azure-cli -y
             fi
+
+            echo "Installing/Upgrading Azure CLI to version $azCliVersion"
+            sudo apt-get update
+            sudo apt-get install apt-transport-https ca-certificates curl gnupg lsb-release
+
+            sudo mkdir -p /etc/apt/keyrings
+            curl -sLS https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /etc/apt/keyrings/microsoft.gpg
+            sudo chmod go+r /etc/apt/keyrings/microsoft.gpg
+
+            AZ_DIST=$(lsb_release -cs)
+            echo "Types: deb
+            URIs: https://packages.microsoft.com/repos/azure-cli/
+            Suites: ${AZ_DIST}
+            Components: main
+            Architectures: $(dpkg --print-architecture)
+            Signed-by: /etc/apt/keyrings/microsoft.gpg" | sudo tee /etc/apt/sources.list.d/azure-cli.sources
+
+            # Obtain the currently installed distribution
+            AZ_DIST=$(lsb_release -cs)
+
+            # Store an Azure CLI version of choice
+            AZ_VER=${{ parameters.AZCLIVERSION }}
+
+            # Install a specific version
+            sudo apt-get install azure-cli=${AZ_VER}-1~${AZ_DIST}
+
             az --version
           displayName: 'Install/Upgrade Azure CLI'
 
