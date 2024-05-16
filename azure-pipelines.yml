@@ -132,7 +132,7 @@ stages:
           displayName: 'Terraform Init and Plan and save the plan'
           
         - task: AzureCLI@2
-          condition: ne(variables['TFPLAN_CONTAINER_NAME'], '') AND succeeded()
+          condition: and(ne(variables['TFPLAN_CONTAINER_NAME'], ''), succeeded())
           displayName: 'Upload tfplan to Azure Storage Account'
           inputs:
             addSpnToEnvironment: true
@@ -212,7 +212,7 @@ stages:
           displayName: 'Terraform Init, Validate and apply the plan'
       
         - task: AzureCLI@2
-          condition: ne(variables['TFPLAN_CONTAINER_NAME'], '') AND succeeded()
+          condition: and(ne(variables['TFPLAN_CONTAINER_NAME'], ''), succeeded())
           displayName: 'Delete tfplan from Azure Storage Account'
           inputs:
             addSpnToEnvironment: true
