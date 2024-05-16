@@ -7,16 +7,16 @@ parameters:
     default: "2.60.0"
   - name: NOTIFY_EMAIL # eg. : abc@cde.com
     type: string
-    default: ""
+    default: "" # By default, it will not notify any email
   - name: TERRAFORM_DEPLOYMENT_REPO # please enter the same "repository name" as defined in the pipeline where this template is used
     type: string
   - name: AZURE_SERVICE_CONNECTION_NAME
     type: string
   - name: AZURE_STORAGE_ACCOUNT_NAME
     type: string
-  - name: TFPLAN_CONTAINER_NAME
+  - name: TFPLAN_CONTAINER_NAME # set the container name if you want to store the tfplan file in Azure Storage Account 
     type: string
-    default: ""
+    default: "" # By default, it will not store the tfplan file in Azure Storage Account
   - name: BACKEND_CONTAINER_NAME
     type: string
   - name: BACKEND_KEY # eg. : terraform.tfstate
