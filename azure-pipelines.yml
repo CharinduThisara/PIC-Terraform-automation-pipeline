@@ -33,9 +33,9 @@ stages:
       displayName: 'Install Terraform and Azure CLI'
       steps:
         - checkout: self
-          path: terraform_conf
+          path: $(Build.SourcesDirectory)/terraform_conf
         - checkout: ${{ parameters.TERRAFORM_DEPLOYMENT_REPO }}
-          path: terraform_deployment
+          path: $(Build.SourcesDirectory)/terraform_deployment
         - script: |
             # Install or upgrade Terraform
             if [[ -z "${{ parameters.TERRAFORM_VERSION }}" ]] && ! command -v terraform &> /dev/null; then
@@ -170,9 +170,9 @@ stages:
       dependsOn: waitforValidation
       steps:
         - checkout: self
-          path: terraform_conf
+          path: $(Build.SourcesDirectory)/terraform_conf
         - checkout: ${{ parameters.TERRAFORM_DEPLOYMENT_REPO }}
-          path: terraform_deployment
+          path: $(Build.SourcesDirectory)/terraform_deployment
 
         - task: AzureCLI@2
           displayName: 'Preparing Azure Credentials for terraform & Downloading tfplan from Azure Storage Account'
