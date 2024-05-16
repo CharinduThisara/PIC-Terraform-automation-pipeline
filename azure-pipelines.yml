@@ -67,7 +67,10 @@ stages:
             curl -sLS https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /etc/apt/keyrings/microsoft.gpg
             sudo chmod go+r /etc/apt/keyrings/microsoft.gpg
 
+            # Obtain the currently installed distribution
             AZ_DIST=$(lsb_release -cs)
+
+            # set sources list
             echo "Types: deb
             URIs: https://packages.microsoft.com/repos/azure-cli/
             Suites: ${AZ_DIST}
@@ -75,14 +78,13 @@ stages:
             Architectures: $(dpkg --print-architecture)
             Signed-by: /etc/apt/keyrings/microsoft.gpg" | sudo tee /etc/apt/sources.list.d/azure-cli.sources
 
-            # Obtain the currently installed distribution
-            AZ_DIST=$(lsb_release -cs)
-
             # Store an Azure CLI version of choice
             AZ_VER=${{ parameters.AZCLIVERSION }}
 
+            sudo apt-get update
+            
             # Install a specific version
-            sudo apt-get install azure-cli=${AZ_VER}-1~${AZ_DIST}
+            sudo apt-get install azure-cli=${AZ_VER}-1~${AZ_DIST} -y
 
             az --version
           displayName: 'Install/Upgrade Azure CLI'
