@@ -41,6 +41,7 @@ stages:
             if command -v terraform &> /dev/null; then
                 echo "Uninstalling existing Terraform version"
                 sudo apt remove terraform -y
+                sudo snap remove terraform
             fi
 
             echo "Installing/Upgrading Terraform to version ${{ parameters.TERRAFORM_VERSION }}"
@@ -57,6 +58,7 @@ stages:
             if command -v az &> /dev/null; then
                 echo "Uninstalling existing Azure CLI version"
                 sudo apt remove azure-cli -y
+                sudo snap remove azure-cli
             fi
 
             echo "Installing/Upgrading Azure CLI to version $azCliVersion"
@@ -82,7 +84,7 @@ stages:
             AZ_VER=${{ parameters.AZCLIVERSION }}
 
             sudo apt-get update
-            
+
             # Install a specific version
             sudo apt-get install azure-cli=${AZ_VER}-1~${AZ_DIST} -y
 
