@@ -123,7 +123,7 @@ stages:
             ls $(Agent.BuildDirectory) -lah
             echo "-------------------"
             cd $(Agent.BuildDirectory)/terraform_deployment
-            cp ../terraform_conf/*
+            cp ../terraform_conf/* -r
             ls -lah
             echo "-------------------"
 
@@ -209,7 +209,7 @@ stages:
             
             echo "-------------------"
             cd terraform_deployment
-            cp ../terraform_conf/* .
+            cp ../terraform_conf/* -r
             ls -lah
             echo "-------------------"
 
