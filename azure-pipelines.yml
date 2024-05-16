@@ -131,7 +131,7 @@ stages:
             echo "Validating configuration"
             terraform validate
 
-            terraform plan -out=tfplan > tfplan.txt
+            terraform plan -input=false -out=tfplan > tfplan.txt
 
             echo "------------------------------------------------"
             echo "|               Terraform Plan                 |"
