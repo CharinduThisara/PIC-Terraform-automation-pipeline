@@ -10,7 +10,7 @@ parameters:
     default: ""
   - name: AZURE_SERVICE_CONNECTION_NAME
     type: string
-  - name: STORAGE_ACCOUNT_NAME
+  - name: AZURE_STORAGE_ACCOUNT_NAME
     type: string
   - name: TFPLAN_CONTAINER_NAME
     type: string
