@@ -165,7 +165,7 @@ stages:
             notifyUsers: |
               ${{ parameters.NOTIFY_EMAIL }}
             instructions: |
-              'Review the Terraform plan and confirm if you want to apply the changes.' 
+              'Review the Terraform plan printed to CLI in the previous pipeline job steps or you may access the tfplan through the configured Azure Storage Account'
     
     - job: TerraformApply
       displayName: 'Terraform Apply'
