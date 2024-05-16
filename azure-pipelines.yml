@@ -14,7 +14,7 @@ parameters:
     type: string
   - name: TFPLAN_CONTAINER_NAME
     type: string
-  - name: TERRAFORM_DEPLOYMENT_REPO # please enter the same "repository name" as defined in the pipeline where this template is being used
+  - name: TERRAFORM_DEPLOYMENT_REPO # please enter the same "repository name" as defined in the pipeline where this template is used
     type: string
   - name: BACKEND_CONTAINER_NAME
     type: string
