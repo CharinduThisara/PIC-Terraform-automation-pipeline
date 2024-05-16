@@ -103,7 +103,7 @@ stages:
               echo "##vso[task.setvariable variable=ARM_TENANT_ID;issecret=true]${tenantId}"
 
               # get the Azure storage account resource_group_name
-              resource_group=$(az storage account show --name $sample --query 'resourceGroup' -o tsv)
+              resource_group=$(az storage account show --name ${{ parameters.AZURE_STORAGE_ACCOUNT_NAME }} --query 'resourceGroup' -o tsv)
               echo "##vso[task.setvariable variable=BACKEND_RESOURCE_GROUP_NAME;issecret=false]$resource_group"
               
         - script: |
