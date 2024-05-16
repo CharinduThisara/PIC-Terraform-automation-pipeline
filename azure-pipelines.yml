@@ -169,8 +169,6 @@ stages:
       displayName: 'Terraform Apply'
       dependsOn: waitforValidation
       steps:
-        - checkout: self
-          path: terraform_conf
         - checkout: ${{ parameters.TERRAFORM_DEPLOYMENT_REPO }}
           path: terraform_deployment
 
@@ -207,11 +205,7 @@ stages:
             export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
             export ARM_TENANT_ID=$(ARM_TENANT_ID)
             
-            echo "-------------------"
             cd $(Agent.BuildDirectory)/terraform_deployment
-            cp ../terraform_conf/* . -r
-            ls -lah
-            echo "-------------------"
 
             echo "Initializing Terraform"
             terraform init -backend-config="storage_account_name=${{ parameters.AZURE_STORAGE_ACCOUNT_NAME }}" -backend-config="container_name=${{ parameters.BACKEND_CONTAINER_NAME }}" -backend-config="key=${{ parameters.BACKEND_KEY }}" -backend-config="resource_group_name=${{ parameters.BACKEND_RESOURCE_GROUP_NAME }}"
