@@ -208,7 +208,7 @@ stages:
             export ARM_TENANT_ID=$(ARM_TENANT_ID)
             
             echo "-------------------"
-            cd terraform_deployment
+            cd $(Agent.BuildDirectory)/terraform_deployment
             cp ../terraform_conf/* . -r
             ls -lah
             echo "-------------------"
