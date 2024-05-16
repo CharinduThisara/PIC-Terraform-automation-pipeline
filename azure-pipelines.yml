@@ -14,15 +14,13 @@ parameters:
     type: string
   - name: TFPLAN_CONTAINER_NAME
     type: string
-  - name: TERRAFORM_DEPLOYMENT_REPO
+  - name: TERRAFORM_DEPLOYMENT_REPO # please enter the same "repository name" as defined in the pipeline where this template is being used
     type: string
   - name: BACKEND_CONTAINER_NAME
     type: string
   - name: BACKEND_KEY
     type: string
   - name: BACKEND_RESOURCE_GROUP_NAME
-    type: string
-  - name: TERRAFORM_CONF_REPO
     type: string
 
 stages: 
