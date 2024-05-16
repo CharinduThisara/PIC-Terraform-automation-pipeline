@@ -9,7 +9,7 @@ parameters:
     type: string
   - name: AZURE_STORAGE_ACCOUNT_NAME
     type: string
-  - name: AZURE_STORAGE_CONTAINER_NAME
+  - name: TFPLAN_CONTAINER_NAME
     type: string
   - name: TERRAFORM_DEPLOYMENT_REPO
     type: string
@@ -19,6 +19,9 @@ parameters:
     type: string
   - name: BACKEND_RESOURCE_GROUP_NAME
     type: string
+  - name: NOTIFY_EMAIL
+    type: string
+    default: ""
 
 stages: 
 - stage: TerraformPlanAndApply
@@ -47,7 +50,7 @@ stages:
                 echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
                 sudo apt update && sudo apt install "terraform=${{ parameters.TERRAFORM_VERSION }}" -y
             else
-                echo "Terraform is already installed and matches the specified version."
+                echo "Terraform is already installed and matches the required version." 
             fi
             terraform --version
           displayName: 'Install/Upgrade Terraform'
@@ -90,7 +93,7 @@ stages:
                 sudo apt-get install azure-cli=${AZ_VER}-1~${AZ_DIST}
 
             else
-                echo "Azure CLI is already installed and matches the specified version."
+                echo "Azure CLI is already installed and matches the required version."
             fi
             az --version
           displayName: 'Install/Upgrade Azure CLI'
@@ -139,8 +142,8 @@ stages:
             scriptLocation: 'inlineScript'
             scriptType: 'bash'
             inlineScript: |
-              az storage blob upload --account-name ${{ parameters.AZURE_STORAGE_ACCOUNT_NAME }} --container-name  ${{ parameters.AZURE_STORAGE_CONTAINER_NAME }} --file $(System.DefaultWorkingDirectory)/${{ parameters.TERRAFORM_DEPLOYMENT_REPO }}/tfplan --name $(Build.BuildId)-tfplan
-              az storage blob upload --account-name ${{ parameters.AZURE_STORAGE_ACCOUNT_NAME }} --container-name  ${{ parameters.AZURE_STORAGE_CONTAINER_NAME }} --file $(System.DefaultWorkingDirectory)/${{ parameters.TERRAFORM_DEPLOYMENT_REPO }}/tfplan.txt --name $(Build.BuildId)-tfplan.txt
+              az storage blob upload --account-name ${{ parameters.AZURE_STORAGE_ACCOUNT_NAME }} --container-name  ${{ parameters.TFPLAN_CONTAINER_NAME }} --file $(System.DefaultWorkingDirectory)/${{ parameters.TERRAFORM_DEPLOYMENT_REPO }}/tfplan --name $(Build.BuildId)-tfplan
+              az storage blob upload --account-name ${{ parameters.AZURE_STORAGE_ACCOUNT_NAME }} --container-name  ${{ parameters.TFPLAN_CONTAINER_NAME }} --file $(System.DefaultWorkingDirectory)/${{ parameters.TERRAFORM_DEPLOYMENT_REPO }}/tfplan.txt --name $(Build.BuildId)-tfplan.txt
 
     - job: waitforValidation
       displayName: wait for deployment validation
@@ -149,7 +152,8 @@ stages:
       steps:
         - task: ManualValidation@0
           inputs:
-            notifyUsers: ''
+            notifyUsers: |
+              ${{ parameters.NOTIFY_EMAIL }}
             instructions: |
               'Review the Terraform plan and confirm if you want to apply the changes.' 
     
@@ -175,29 +179,7 @@ stages:
               echo "-------------------"
               ls -la
               echo "-------------------"
-              az storage blob download --account-name ${{ parameters.AZURE_STORAGE_ACCOUNT_NAME }} --container-name  ${{ parameters.AZURE_STORAGE_CONTAINER_NAME }} --name $(Build.BuildId)-tfplan --file $(System.DefaultWorkingDirectory)/${{ parameters.TERRAFORM_DEPLOYMENT_REPO }}/tfplan
-
-        - script: |
-            export ARM_CLIENT_ID=$(ARM_CLIENT_ID)
-            export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET)
-            export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
-            export ARM_TENANT_ID=$(ARM_TENANT_ID)
-
-            echo "-------------------"
-            cd ${{ parameters.TERRAFORM_DEPLOYMENT_REPO }}
-            cp ../terraform-conf/* .
-            ls -lah
-            echo "-------------------"
-
-            terraform init -backend-config="storage_account_name=${{ parameters.AZURE_STORAGE_ACCOUNT_NAME }}" -backend-config="container_name=${{ parameters.BACKEND_CONTAINER_NAME }}" -backend-config="key=${{ parameters.BACKEND_KEY }}" -backend-config="resource_group_name=${{ parameters.BACKEND_RESOURCE_GROUP_NAME }}"
-
-            echo "Validated plan"
-            terraform show -json tfplan > tfplan.json
-            cat tfplan.json
-            echo "-----------------------------------"
-            echo
-
-          displayName: 'Terraform Plan Check'
+              az storage blob download --account-name ${{ parameters.AZURE_STORAGE_ACCOUNT_NAME }} --container-name  ${{ parameters.TFPLAN_CONTAINER_NAME }} --name $(Build.BuildId)-tfplan --file $(System.DefaultWorkingDirectory)/${{ parameters.TERRAFORM_DEPLOYMENT_REPO }}/tfplan
 
         - task: AzureCLI@2
           displayName: 'Prepare Azure Credentials and Create a snapshot of the current state'
@@ -214,13 +196,22 @@ stages:
             export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET)
             export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
             export ARM_TENANT_ID=$(ARM_TENANT_ID)
+            
+            echo "-------------------"
             cd ${{ parameters.TERRAFORM_DEPLOYMENT_REPO }}
-            # Prompt for user input
-            cat tfplan.json | tr -d '\n' | sed 's/}{/}\n{/g'
+            cp ../terraform-conf/* .
+            ls -lah
+            echo "-------------------"
+
+            echo "Initializing Terraform"
+            terraform init -backend-config="storage_account_name=${{ parameters.AZURE_STORAGE_ACCOUNT_NAME }}" -backend-config="container_name=${{ parameters.BACKEND_CONTAINER_NAME }}" -backend-config="key=${{ parameters.BACKEND_KEY }}" -backend-config="resource_group_name=${{ parameters.BACKEND_RESOURCE_GROUP_NAME }}"
+
             echo "Validating configuration"
             terraform validate
-            terraform apply tfplan
-          displayName: 'Terraform Apply'
+
+            echo "Applying configuration"
+            terraform apply tfplan -input=false 
+          displayName: 'Terraform Init, Validate and apply the plan'
       
         - task: AzureCLI@2
           displayName: 'Delete tfplan from Azure Storage Account'
@@ -230,5 +221,5 @@ stages:
             scriptLocation: 'inlineScript'
             scriptType: 'bash'
             inlineScript: |
-              az storage blob delete --account-name ${{ parameters.AZURE_STORAGE_ACCOUNT_NAME }} --container-name  ${{ parameters.AZURE_STORAGE_CONTAINER_NAME }} --name $(Build.BuildId)-tfplan
-              az storage blob delete --account-name ${{ parameters.AZURE_STORAGE_ACCOUNT_NAME }} --container-name  ${{ parameters.AZURE_STORAGE_CONTAINER_NAME }} --name $(Build.BuildId)-tfplan.txt
+              az storage blob delete --account-name ${{ parameters.AZURE_STORAGE_ACCOUNT_NAME }} --container-name  ${{ parameters.TFPLAN_CONTAINER_NAME }} --name $(Build.BuildId)-tfplan
+              az storage blob delete --account-name ${{ parameters.AZURE_STORAGE_ACCOUNT_NAME }} --container-name  ${{ parameters.TFPLAN_CONTAINER_NAME }} --name $(Build.BuildId)-tfplan.txt
