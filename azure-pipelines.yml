@@ -99,7 +99,7 @@ stages:
           displayName: 'Install/Upgrade Azure CLI'
 
         - task: AzureCLI@2
-          displayName: 'Prepare Credentials'
+          displayName: 'Preparing Azure Credentials for terraform'
           inputs:
             addSpnToEnvironment: true
             azureSubscription: ${{ parameters.SERVICE_CONNECTION_NAME }}
@@ -125,13 +125,17 @@ stages:
 
             echo "Initializing Terraform"
             terraform init -backend-config="storage_account_name=${{ parameters.AZURE_STORAGE_ACCOUNT_NAME }}" -backend-config="container_name=${{ parameters.BACKEND_CONTAINER_NAME }}" -backend-config="key=${{ parameters.BACKEND_KEY }}" -backend-config="resource_group_name=${{ parameters.BACKEND_RESOURCE_GROUP_NAME }}" 
-            
-            echo "-------------------"
-            ls -lah
-            echo "-------------------"
+
+            echo "Validating configuration"
+            terraform validate
 
             terraform plan -out=tfplan > tfplan.txt
+
+            echo "------------------------------------------------"
+            echo "|               Terraform Plan                 |"
+            echo "------------------------------------------------"
             cat tfplan.txt
+            echo "------------------------------------------------"
           displayName: 'Terraform Init and Plan and save the plan'
           
         - task: AzureCLI@2
@@ -165,7 +169,7 @@ stages:
         - checkout: terraform_deployment
 
         - task: AzureCLI@2
-          displayName: 'Prepare Azure Credentials and Download tfplan'
+          displayName: 'Preparing Azure Credentials for terraform & Downloading tfplan from Azure Storage Account'
           inputs:
             addSpnToEnvironment: true
             azureSubscription: ${{ parameters.SERVICE_CONNECTION_NAME }}
@@ -176,19 +180,19 @@ stages:
               echo "##vso[task.setvariable variable=ARM_CLIENT_SECRET;issecret=true]${servicePrincipalKey}"
               echo "##vso[task.setvariable variable=ARM_SUBSCRIPTION_ID;issecret=true]$(az account show --query 'id' -o tsv)"
               echo "##vso[task.setvariable variable=ARM_TENANT_ID;issecret=true]${tenantId}"
-              echo "-------------------"
-              ls -la
-              echo "-------------------"
+
+              # Download the tfplan file from Azure Storage Account
               az storage blob download --account-name ${{ parameters.AZURE_STORAGE_ACCOUNT_NAME }} --container-name  ${{ parameters.TFPLAN_CONTAINER_NAME }} --name $(Build.BuildId)-tfplan --file $(System.DefaultWorkingDirectory)/${{ parameters.TERRAFORM_DEPLOYMENT_REPO }}/tfplan
 
         - task: AzureCLI@2
-          displayName: 'Prepare Azure Credentials and Create a snapshot of the current state'
+          displayName: 'Creating a snapshot of tfstate file in Azure Storage Account'
           inputs:
             addSpnToEnvironment: true
             azureSubscription: ${{ parameters.SERVICE_CONNECTION_NAME }}
             scriptLocation: 'inlineScript'
             scriptType: 'bash'
             inlineScript: |
+              # Create a snapshot of the tfstate file
               az storage blob snapshot --account-name ${{ parameters.AZURE_STORAGE_ACCOUNT_NAME }} --container-name  ${{ parameters.BACKEND_CONTAINER_NAME }} --name ${{ parameters.BACKEND_KEY }} 
 
         - script: |
