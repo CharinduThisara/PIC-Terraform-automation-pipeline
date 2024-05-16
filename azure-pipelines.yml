@@ -8,14 +8,15 @@ parameters:
   - name: NOTIFY_EMAIL
     type: string
     default: ""
+  - name: TERRAFORM_DEPLOYMENT_REPO # please enter the same "repository name" as defined in the pipeline where this template is used
+    type: string
   - name: AZURE_SERVICE_CONNECTION_NAME
     type: string
   - name: AZURE_STORAGE_ACCOUNT_NAME
     type: string
   - name: TFPLAN_CONTAINER_NAME
     type: string
-  - name: TERRAFORM_DEPLOYMENT_REPO # please enter the same "repository name" as defined in the pipeline where this template is used
-    type: string
+    default: ""
   - name: BACKEND_CONTAINER_NAME
     type: string
   - name: BACKEND_KEY
@@ -138,9 +139,14 @@ stages:
             echo "------------------------------------------------"
             cat tfplan.txt
             echo "------------------------------------------------"
+
+            # set variable for tfplan container name
+            echo "##vso[task.setvariable variable=TFPLAN_CONTAINER_NAME;issecret=false]${{ parameters.TFPLAN_CONTAINER_NAME }}"
+
           displayName: 'Terraform Init and Plan and save the plan'
           
         - task: AzureCLI@2
+          condition: ne(variables['TFPLAN_CONTAINER_NAME'], '') AND succeeded()
           displayName: 'Upload tfplan to Azure Storage Account'
           inputs:
             addSpnToEnvironment: true
@@ -213,9 +219,14 @@ stages:
 
             echo "Applying configuration"
             terraform apply -input=false tfplan 
+
+            # set variable for tfplan container name
+            echo "##vso[task.setvariable variable=TFPLAN_CONTAINER_NAME;issecret=false]${{ parameters.TFPLAN_CONTAINER_NAME }}"
+
           displayName: 'Terraform Init, Validate and apply the plan'
       
         - task: AzureCLI@2
+          condition: ne(variables['TFPLAN_CONTAINER_NAME'], '') AND succeeded()
           displayName: 'Delete tfplan from Azure Storage Account'
           inputs:
             addSpnToEnvironment: true
