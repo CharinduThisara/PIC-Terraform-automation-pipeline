@@ -5,9 +5,12 @@ parameters:
   - name: AZCLIVERSION
     type: string
     default: ""
-  - name: SERVICE_CONNECTION_NAME
+  - name: NOTIFY_EMAIL
     type: string
-  - name: AZURE_STORAGE_ACCOUNT_NAME
+    default: ""
+  - name: AZURE_SERVICE_CONNECTION_NAME
+    type: string
+  - name: STORAGE_ACCOUNT_NAME
     type: string
   - name: TFPLAN_CONTAINER_NAME
     type: string
@@ -19,9 +22,8 @@ parameters:
     type: string
   - name: BACKEND_RESOURCE_GROUP_NAME
     type: string
-  - name: NOTIFY_EMAIL
+  - name: TERRAFORM_CONF_REPO
     type: string
-    default: ""
 
 stages: 
 - stage: TerraformPlanAndApply
@@ -102,7 +104,7 @@ stages:
           displayName: 'Preparing Azure Credentials for terraform'
           inputs:
             addSpnToEnvironment: true
-            azureSubscription: ${{ parameters.SERVICE_CONNECTION_NAME }}
+            azureSubscription: ${{ parameters.AZURE_SERVICE_CONNECTION_NAME }}
             scriptLocation: 'inlineScript'
             scriptType: 'bash'
             inlineScript: |
@@ -119,7 +121,7 @@ stages:
 
             echo "-------------------"
             cd ${{ parameters.TERRAFORM_DEPLOYMENT_REPO }}
-            cp ../terraform-conf/* .
+            cp ../${{ parameters.TERRAFORM_CONF_REPO }}/* .
             ls -lah
             echo "-------------------"
 
@@ -142,7 +144,7 @@ stages:
           displayName: 'Upload tfplan to Azure Storage Account'
           inputs:
             addSpnToEnvironment: true
-            azureSubscription: ${{ parameters.SERVICE_CONNECTION_NAME }}
+            azureSubscription: ${{ parameters.AZURE_SERVICE_CONNECTION_NAME }}
             scriptLocation: 'inlineScript'
             scriptType: 'bash'
             inlineScript: |
@@ -172,7 +174,7 @@ stages:
           displayName: 'Preparing Azure Credentials for terraform & Downloading tfplan from Azure Storage Account'
           inputs:
             addSpnToEnvironment: true
-            azureSubscription: ${{ parameters.SERVICE_CONNECTION_NAME }}
+            azureSubscription: ${{ parameters.AZURE_SERVICE_CONNECTION_NAME }}
             scriptLocation: 'inlineScript'
             scriptType: 'bash'
             inlineScript: |
@@ -188,7 +190,7 @@ stages:
           displayName: 'Creating a snapshot of tfstate file in Azure Storage Account'
           inputs:
             addSpnToEnvironment: true
-            azureSubscription: ${{ parameters.SERVICE_CONNECTION_NAME }}
+            azureSubscription: ${{ parameters.AZURE_SERVICE_CONNECTION_NAME }}
             scriptLocation: 'inlineScript'
             scriptType: 'bash'
             inlineScript: |
@@ -203,7 +205,7 @@ stages:
             
             echo "-------------------"
             cd ${{ parameters.TERRAFORM_DEPLOYMENT_REPO }}
-            cp ../terraform-conf/* .
+            cp ../${{ parameters.TERRAFORM_CONF_REPO }}/* .
             ls -lah
             echo "-------------------"
 
@@ -221,7 +223,7 @@ stages:
           displayName: 'Delete tfplan from Azure Storage Account'
           inputs:
             addSpnToEnvironment: true
-            azureSubscription: ${{ parameters.SERVICE_CONNECTION_NAME }}
+            azureSubscription: ${{ parameters.AZURE_SERVICE_CONNECTION_NAME }}
             scriptLocation: 'inlineScript'
             scriptType: 'bash'
             inlineScript: |
