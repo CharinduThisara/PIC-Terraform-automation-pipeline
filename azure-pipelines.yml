@@ -19,8 +19,9 @@ parameters:
     default: "" # By default, it will not store the tfplan file in Azure Storage Account
   - name: BACKEND_CONTAINER_NAME
     type: string
-  - name: BACKEND_KEY # eg. : terraform.tfstate
+  - name: BACKEND_KEY # eg. : terraform
     type: string
+    default: "terraform"
 
 stages: 
 - stage: TerraformPlanAndApply
