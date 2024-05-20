@@ -10,7 +10,7 @@ parameters:
     default: "" # By default, it will not notify any email
   - name: TERRAFORM_DEPLOYMENT_REPO # please enter the same "repository name" as defined in the pipeline where this template is used
     type: string
-  - name: AZURE_SERVICE_CONNECTION_NAME
+  - name: AZURE_SERVICE_CONNECTION_NAME # this service connection should have access to the Azure Storage Account with Storage Blob Data owner role
     type: string
   - name: AZURE_STORAGE_ACCOUNT_NAME
     type: string
@@ -103,10 +103,6 @@ stages:
               echo "##vso[task.setvariable variable=ARM_SUBSCRIPTION_ID;issecret=true]$(az account show --query 'id' -o tsv)"
               echo "##vso[task.setvariable variable=ARM_TENANT_ID;issecret=true]${tenantId}"
 
-              # get the Azure storage account resource_group_name
-              resource_group=$(az storage account show --name ${{ parameters.AZURE_STORAGE_ACCOUNT_NAME }} --query 'resourceGroup' -o tsv)
-              echo "##vso[task.setvariable variable=BACKEND_RESOURCE_GROUP_NAME;issecret=false]$resource_group"
-              
         - script: |
             export ARM_CLIENT_ID=$(ARM_CLIENT_ID)
             export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET)
@@ -214,11 +210,13 @@ stages:
             export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET)
             export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
             export ARM_TENANT_ID=$(ARM_TENANT_ID)
+            export ARM_USE_MSI=true
+            export ARM_USE_AZUREAD=true
             
             cd $(Agent.BuildDirectory)/terraform_deployment
 
             echo "Initializing Terraform"
-            terraform init -backend-config="storage_account_name=${{ parameters.AZURE_STORAGE_ACCOUNT_NAME }}" -backend-config="container_name=${{ parameters.BACKEND_CONTAINER_NAME }}" -backend-config="key=${{ parameters.BACKEND_KEY }}" -backend-config="resource_group_name=$BACKEND_RESOURCE_GROUP_NAME"
+            terraform init -backend-config="storage_account_name=${{ parameters.AZURE_STORAGE_ACCOUNT_NAME }}" -backend-config="container_name=${{ parameters.BACKEND_CONTAINER_NAME }}" -backend-config="key=${{ parameters.BACKEND_KEY }}" 
 
             echo "Validating configuration"
             terraform validate
