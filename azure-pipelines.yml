@@ -191,9 +191,6 @@ stages:
               resource_group=$(az storage account show --name ${{ parameters.AZURE_STORAGE_ACCOUNT_NAME }} --query 'resourceGroup' -o tsv)
               echo "##vso[task.setvariable variable=BACKEND_RESOURCE_GROUP_NAME;issecret=false]$resource_group"
 
-              # Download the tfplan file from Azure Storage Account
-              az storage blob download --account-name ${{ parameters.AZURE_STORAGE_ACCOUNT_NAME }} --container-name  ${{ parameters.TFPLAN_CONTAINER_NAME }} --name $(Build.BuildId)-tfplan --file $(Agent.BuildDirectory)/terraform_deployment/tfplan
-
         - task: AzureCLI@2
           displayName: 'Creating a snapshot of tfstate file in Azure Storage Account'
           inputs:
